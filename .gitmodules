@@ -1,0 +1,3 @@
+[submodule "docker/demo/brat"]
+	path = docker/demo/brat
+	url = git://github.com/IINemo/brat.git
