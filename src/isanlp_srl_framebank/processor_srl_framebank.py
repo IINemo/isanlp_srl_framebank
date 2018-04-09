@@ -14,14 +14,12 @@ from .preposition_extract import extract_preposition
 
 from isanlp.annotation import Event, TaggedSpan
 
-#TODO: demo
+#TODO: limit role confidence
+#TODO: fix logging
 #TODO: Evaluation script
 #TOOD: more features for predicate
-#TODO: +fix argument extractor
-#TODO: model for unknown predicates
-#TODO: limit role confidence
 #TODO: non-core roles
-#TODO: refactor completely =\
+#TODO: refactor completely
 
 class FeatureModelDefault:
     def extract_features(self, pred, arg, postag, 
