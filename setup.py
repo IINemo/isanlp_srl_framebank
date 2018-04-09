@@ -4,7 +4,7 @@
 from setuptools import setup
 
 setup(
-    name='framebank_svn',
+    name='isanl_srl_framebank',
     version='0.0.1',
     packages=['isanlp_srl_framebank'],
     package_dir={'' : 'src'},

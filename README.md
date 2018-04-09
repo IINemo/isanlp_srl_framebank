@@ -185,6 +185,21 @@ Arg(место): лес
 ### Model training  
 TBD:
 
+### Starting web demo
+1. To start web demo, you should start NLP services for morphology, syntax, and SRL parsing first:
+```
+docker run --rm -p 3333:3333 inemo/isanlp
+docker run --rm --shm-size=1024m -ti -p 3334:9999 inemo/syntaxnet_rus server 0.0.0.0 9999
+docker run --rm -p 3335:3333 inemo/isanlp_srl_framebank
+```  
+2. Start demo web application by the following command:
+```
+docker run --rm -d -p 1111:80 -e IP_ADDRESS=10.0.0.9 -e MORPH_PORT=3333 -e SYNTAX_PORT=8111 -e SEM_PORT=3334  inemo/isanlp_srl_framebank_demo
+```  
+Note: instead of `10.0.0.9` you should use your host ip address (but not localhost or 127.0.0.1).  
+3. After web server started you can acesses demo interface at http://10.0.0.9:1111/demo/wui.py
+<img src="img_demo.png" width="350">
+
 ## Implementation details  
 TBD:
 

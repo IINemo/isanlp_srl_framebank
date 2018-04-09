@@ -19,5 +19,7 @@ COPY entrypoint.sh /entrypoint.sh
 
 RUN chmod 777 -R /root/.pyenv && chmod 777 /root
 
+RUN pip install -e /src/isanlp_srl_framebank
+
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["apache2ctl", "-D", "FOREGROUND"]
