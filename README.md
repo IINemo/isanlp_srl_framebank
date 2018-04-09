@@ -23,7 +23,7 @@ docker run --rm -p 3335:3333 inemo/isanlp_srl_framebank
 2. Connect from python using `PipelineDefault`:  
 ```python  
 #
-from isanlp_srl_framebank import PipelineDefault  
+from isanlp_srl_framebank.pipeline_default import PipelineDefault  
 #
 ppl = PipelineDefault(address_morph=('localhost', 3333),
                          address_syntax=('localhost', 3334),
