@@ -1,5 +1,5 @@
 # IsaNLP SRL FrameBank 
-The library provides SRL parser for Russian based on [FrameBank](https://github.com/olesar/framebank) corpus -- semantically annotated corpus of texts in Russian. The parser should be used in conjunction with [IsaNLP library](https://github.com/IINemo/isanlp) and can be considered its module.  
+The library provides SRL parser for Russian based on neural network models trained on [FrameBank](https://github.com/olesar/framebank) corpus -- semantically annotated corpus of texts in Russian. The parser should be used in conjunction with [IsaNLP library](https://github.com/IINemo/isanlp) and can be considered its module.  
 __Disclaimer:__ the code is in alpha stage. It lacks handling of some extreme cases, testing, some documentation, and proper logging. 
 
 ## Installation
@@ -26,8 +26,8 @@ docker run --rm -p 3335:3333 inemo/isanlp_srl_framebank
 from isanlp_srl_framebank.pipeline_default import PipelineDefault  
 #
 ppl = PipelineDefault(address_morph=('localhost', 3333),
-                         address_syntax=('localhost', 3334),
-                         address_srl=('localhost', 3335))
+                      address_syntax=('localhost', 3334),
+                      address_srl=('localhost', 3335))
 res = ppl('Мы поехали на дачу.')
 #
 ```   
@@ -73,7 +73,7 @@ res = ppl('Мы поехали на дачу.')
 
 ## Package overview  
 1. The semantic role labeler. The SRL parser is implemented in `ProcessorSrlFramebank` class. Path: `src/isanlp_srl_framebank/processor_srl_framebank.py`.
-2. Trained models for SRL parser: model for "known" predicates and model for "unknown" predicates. Path: `models`.
+2. Trained neural network models for SRL parser: model for "known" predicates and model for "unknown" predicates. Path: `models`.
 3. Docker container [inemo/isanlp_srl_framebank](https://hub.docker.com/r/inemo/isanlp_srl_framebank/) that contains preinstalled libraries and models. The container provides gRPC service for SRL parsing. Path: `docker/parser`. The container can be obtained with the command:  
 `docker run --rm -p 3335:3333 inemo/isanlp_srl_framebank`
 4. Dockerized web demo for visualization of SRL annotations via [brat](http://brat.nlplab.org/) annotation tool: [inemo/isanlp_srl_framebank_demo](https://hub.docker.com/r/inemo/isanlp_srl_framebank_demo/). Path: `docker/demo`. For example, the container can be obtained with the command (note, you need NLP services started on the corresponding ports, see [Quick start](#quick-start-with-docker) section):  
@@ -202,6 +202,9 @@ Note: instead of `10.0.0.9` you should use your host ip address (but not localho
 
 ## Implementation details  
 TBD:
+
+## Compatability
+The library should be compatible at least with Python 3.6.*
 
 ## Cite / Reference 
 The models for SRL were published in [Dialog proceedings](http://www.dialog-21.ru/media/3945/shelmanovaodevyatkinda.pdf).  
