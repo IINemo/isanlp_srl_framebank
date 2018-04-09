@@ -6,10 +6,12 @@ __Disclaimer:__ the code is in alpha stage. It lacks handling of some extreme ca
 1. Install IsaNLP and its dependencies:
 ```
 pip install grpcio
-pip install git+https://github.com/IINemo/isanlp```  
+pip install git+https://github.com/IINemo/isanlp
+```  
 2. Install IsaNLP SRL FrameBank library:
 ```
-pip install git+https://github.com/IINemo/isanlp_srl_framebank```  
+pip install git+https://github.com/IINemo/isanlp_srl_framebank
+```  
 
 ## Quick start with docker  
 1. Depoy docker containers for morphology, syntax, and SRL parsing:  
@@ -189,9 +191,10 @@ TBD:
 ## Cite / Reference 
 The models for SRL were published in [Dialog proceedings](http://www.dialog-21.ru/media/3945/shelmanovaodevyatkinda.pdf).  
   * GOST:  
-```Shelmanov A., Devyatkin D. Semantic role labeling with neural networks for texts in Russian // Computational Linguistics and Intellectual Technologies. Papers from the Annual International Conference "Dialogue" (2017). — Vol. 1. — 2017. — P. 245–256.```  
-  * BibTex:
 ```
+Shelmanov A., Devyatkin D. Semantic role labeling with neural networks for texts in Russian // Computational Linguistics and Intellectual Technologies. Papers from the Annual International Conference "Dialogue" (2017). — Vol. 1. — 2017. — P. 245–256.```  
+  * BibTex:
+```  
 @INPROCEEDINGS{devshelm2017dialog,
       author = {Shelmanov, A.O. and Devyatkin, D.A.},
       title = {Semantic role labeling with neural networks for texts in {Russian}},
