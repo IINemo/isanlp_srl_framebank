@@ -1,8 +1,10 @@
 # IsaNLP SRL FrameBank 
-The library provides SRL parser for Russian based on neural network models trained on [FrameBank](https://github.com/olesar/framebank) corpus -- semantically annotated corpus of texts in Russian. The parser should be used in conjunction with [IsaNLP library](https://github.com/IINemo/isanlp) and can be considered its module.  
-__Disclaimer:__ the code is in alpha stage. It lacks handling of some extreme cases, testing, some documentation, and proper logging. 
+This Python 3 library provides SRL parser for Russian based on neural network models trained on [FrameBank](https://github.com/olesar/framebank) corpus -- semantically annotated corpus of texts in Russian. The parser should be used in conjunction with [IsaNLP library](https://github.com/IINemo/isanlp) and can be considered its module. 
+__Disclaimer:__ the code is in alpha stage. 
 
 ## Installation
+
+### Quick (few dependencies for usage with docker)
 1. Install IsaNLP and its dependencies:
 ```
 pip install grpcio
@@ -11,6 +13,13 @@ pip install git+https://github.com/IINemo/isanlp
 2. Install IsaNLP SRL FrameBank library:
 ```
 pip install git+https://github.com/IINemo/isanlp_srl_framebank
+```  
+
+### Full
+1. Do the same steps for Quick installation.
+2. Install gensim, tensorflow, numpy, sklearn:
+```
+pip install gensim==3.4.0 tensorflow==1.4.0 numpy sklearn
 ```  
 
 ## Quick start with docker  
@@ -204,7 +213,8 @@ Note: instead of `10.0.0.9` you should use your host ip address (but not localho
 TBD:
 
 ## Compatability
-The library should be compatible at least with Python 3.6.*
+The library should be compatible at least with Python 3.6.  
+Tested with gensim==3.4.0 tensorflow==1.4.0 .
 
 ## Cite / Reference 
 The models for SRL were published in [Dialog proceedings](http://www.dialog-21.ru/media/3945/shelmanovaodevyatkinda.pdf).  

@@ -1,5 +1,6 @@
-from keras.models import load_model
-from gensim.models.word2vec import KeyedVectors
+from tensorflow.python.keras.models import load_model
+#from gensim.models.word2vec import KeyedVectors
+from gensim.models import KeyedVectors
 from scipy.optimize import linear_sum_assignment
 from sklearn.preprocessing import LabelBinarizer
 import numpy as np
@@ -13,6 +14,10 @@ from .predicate_extractor import PredicateExtractor
 from .preposition_extract import extract_preposition
 
 from isanlp.annotation import Event, TaggedSpan
+
+import logging
+
+logger = logging.getLogger('isanlp_srl_framebank')
 
 #TODO: limit role confidence
 #TODO: fix logging
@@ -107,12 +112,12 @@ class ProcessorSrlFramebank:
             self._known_preds = set(json.load(f))
         
         self._model_known_preds = ModelProcessorSrlFramebank(os.path.join(model_dir_path, 'known_preds'))
-        print('Model for known predicates is loaded.')
+        logger.info('Model for known predicates is loaded.')
         
         path_model_unknown_preds = os.path.join(model_dir_path, 'unknown_preds')
         if enable_model_for_unknown_predicates and os.path.exists(path_model_unknown_preds):
             self._model_unknown_preds = ModelProcessorSrlFramebank(path_model_unknown_preds)
-            print('Model for unknown predicates is loaded.')
+            logger.info('Model for unknown predicates is loaded.')
         else:
             self._model_unknown_preds = None
             
@@ -158,9 +163,9 @@ class ProcessorSrlFramebank:
         
         vectors = self._vectorize_features(model, features)
         
-        print('predicting')
+        logger.info('predicting')
         res = model._model.predict(vectors)
-        print('Done.')
+        logger.info('Done.')
         
         return res
     
@@ -182,10 +187,10 @@ class ProcessorSrlFramebank:
                 pred_lemma = sent_lemma[pred]
                 if pred_lemma in self._known_preds or self._model_unknown_preds is None:
                     model = self._model_known_preds
-                    print('Using model for known predicates.')
+                    logger.info('Using model for known predicates.')
                 else:
                     model = self._model_unknown_preds
-                    print('Using model for unknown predicates.')
+                    logger.info('Using model for unknown predicates.')
                 
                 args = self._argument_extractor(pred, sent_postag, sent_morph, 
                                                 sent_lemma, sent_syntax_dep_tree)
@@ -202,10 +207,10 @@ class ProcessorSrlFramebank:
                              for arg in args]
                 
                 if self._enable_global_scoring:
-                    print('Solving linear sum task.')
+                    logger.info('Solving linear sum task.')
                     roles = [None for i in range(len(args))]
                     row_ind, col_ind = linear_sum_assignment(-1. * np.concatenate(arg_roles, axis = 0))
-                    print('Finished.')
+                    logger.info('Finished.')
 
                     for row_ind, col_ind in zip(row_ind, col_ind):
                         roles[row_ind] = model._roles.classes_[col_ind]
@@ -214,7 +219,7 @@ class ProcessorSrlFramebank:
                         arg_annot = TaggedSpan(tag = roles[i], begin = args[i], end = args[i])
                         pred_arg_roles.append(arg_annot)
                 else:
-                    print('Using inverse transform.')
+                    logger.info('Using inverse transform.')
                     roles = model._roles.inverse_transform(np.concatenate(arg_roles))
                     roles = [str(e) for e in roles]
                     pred_arg_roles = []
