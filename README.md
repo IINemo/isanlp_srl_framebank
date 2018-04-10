@@ -1,8 +1,9 @@
 # IsaNLP SRL FrameBank 
-This Python 3 library provides SRL parser for Russian based on neural network models trained on [FrameBank](https://github.com/olesar/framebank) corpus -- semantically annotated corpus of texts in Russian. The parser should be used in conjunction with [IsaNLP library](https://github.com/IINemo/isanlp) and can be considered its module. 
+This Python 3 library provides SRL parser for Russian based on neural network models trained on [FrameBank](https://github.com/olesar/framebank) corpus -- semantically annotated corpus of texts in Russian. The parser should be used in conjunction with [IsaNLP library](https://github.com/IINemo/isanlp) and can be considered its module.  
 __Disclaimer:__ the code is in alpha stage. 
 
 ## Installation
+Note: the library is considered for Python 3.6. If you do not have one, checkout [pyenv](https://github.com/pyenv/pyenv) or [this](https://hub.docker.com/r/windj007/jupyter-keras-tools/) docker container powered with the data science tools: jupyter, keras, sklearn, gensim, tensorflow, pytorch, etc.
 
 ### Quick (few dependencies for usage with docker)
 1. Install IsaNLP and its dependencies:
@@ -22,7 +23,7 @@ pip install git+https://github.com/IINemo/isanlp_srl_framebank
 pip install gensim==3.4.0 tensorflow==1.4.0 numpy sklearn
 ```  
 
-## Quick start with docker  
+## Quick start with docker (< 10 mins)
 1. Depoy docker containers for morphology, syntax, and SRL parsing:  
 ```
 docker run --rm -p 3333:3333 inemo/isanlp
