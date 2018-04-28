@@ -1,3 +1,6 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/IINemo/isanlp_srl_framebank/blob/master/LICENSE)
+![Python 3.6](https://img.shields.io/badge/python-3.6-green.svg)
+
 # IsaNLP SRL FrameBank 
 This Python 3 library provides SRL parser for Russian based on neural network models trained on [FrameBank](https://github.com/olesar/framebank) corpus -- semantically annotated corpus of texts in Russian. The parser should be used in conjunction with [IsaNLP library](https://github.com/IINemo/isanlp) and can be considered its module.  
 __Disclaimer:__ the code is in alpha stage. 
