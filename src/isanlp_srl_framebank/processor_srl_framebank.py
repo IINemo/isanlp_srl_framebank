@@ -1,5 +1,4 @@
 from tensorflow.python.keras.models import load_model
-#from gensim.models.word2vec import KeyedVectors
 from gensim.models import KeyedVectors
 from scipy.optimize import linear_sum_assignment
 from sklearn.preprocessing import LabelBinarizer
@@ -16,15 +15,14 @@ from .preposition_extract import extract_preposition
 from isanlp.annotation import Event, TaggedSpan
 
 import logging
-
 logger = logging.getLogger('isanlp_srl_framebank')
 
 #TODO: limit role confidence
 #TODO: fix logging
-#TODO: Evaluation script
+#TODO: Evaluation script for parser (in addition to evaluation of models)
 #TOOD: more features for predicate
 #TODO: non-core roles
-#TODO: refactor completely
+#TODO: refactor 
 
 class FeatureModelDefault:
     def extract_features(self, pred, arg, postag, 
@@ -59,6 +57,7 @@ class FeatureModelDefault:
         features_pred_lemma = {'pred_lemma' : pred_lemma}
         features_arg_lemma = {'arg_lemma' : arg_lemma}
         
+        # Tuple (categorical, embeddings, continues)
         return [(None, features_arg_lemma, None),
                 (None, features_pred_lemma, None),
                 (features_categorical, None, features_noncat)]

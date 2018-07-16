@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y --allow-unauthenticated --no-install-re
 
 RUN pip  install -U pip
 RUN python -m pip install -U cython
-RUN pip install scipy sklearn gensim==3.2.0 tensorflow==1.3.0 keras h5py
+RUN pip install scipy sklearn gensim==3.2.0 tensorflow==1.4.0 keras h5py
 
 COPY isanlp_srl_framebank /src/isanlp_srl_framebank
 COPY pipeline_object.py /src/isanlp_srl_framebank/src/pipeline_object.py

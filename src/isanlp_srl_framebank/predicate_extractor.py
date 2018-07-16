@@ -24,3 +24,6 @@ def log(tokens, lemmas, predicates, arguments):
 
     except IndexError:
         pass
+
+
+
