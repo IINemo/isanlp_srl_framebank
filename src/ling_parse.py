@@ -1,5 +1,6 @@
 import os
 import sys
+import argparse
 
 #sys.path.append('/notebook/framebank_parser/roleinduction/ri_tools/src/liash')
 sys.path.append('../libs/pylingtools/')
@@ -25,6 +26,12 @@ from isanlp.wrapper_multi_process_document import WrapperMultiProcessDocument
 from isanlp.wrapper_multi_process_document import split_equally
 
 from convert_corpus_to_brat import make_text, create_verb_example_index
+
+parser = argparse.ArgumentParser(description='Process frambank .json file to obtain linguistic data')
+parser.add_argument("--cleared-corpus", nargs="?", dest="source", default="../data/cleared_corpus.json", help="preprocessed framebank file in .json format")
+parser.add_argument("--output", nargs="?", dest="output", default="../data/results_final_fixed.pckl", help="path to output .pckl file")
+
+args = parser.parse_args()
 
 
 ppl = WrapperMultiProcessDocument([
@@ -57,7 +64,7 @@ ppl = WrapperMultiProcessDocument([
 ])
 
 print("1. Reading data....")
-input_data_path = '../data/cleared_corpus.json'
+input_data_path = args.source
 
 with open(input_data_path, 'r') as f:
     data = json.load(f)
@@ -96,7 +103,7 @@ for ex_id, ling_annot in ling_annots_to_fix:
 print("..Done!")
 
 print("4.Saving results...")
-with open('../data/results_final_fixed.pckl', 'wb') as f:
+with open(args.output, 'wb') as f:
     pickle.dump(ling_annots_to_fix, f)
 
 print("..Done!")
