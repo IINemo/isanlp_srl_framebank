@@ -1,7 +1,7 @@
 from tqdm import tqdm
 from isanlp_srl_framebank import make_text
 
-class FeatureModeling(object):
+class FeatureModelingTool(object):
 
     def __init__(self, ling_cache, feature_extractor):
         self.ling_cache = ling_cache
@@ -27,21 +27,11 @@ class FeatureModeling(object):
         ling_ann = self.ling_cache[ex_id]
 
         pred_offset = offset_index[(pred[0], pred[1])]
-        pred_ling_sent, pred_ling_word = self.find_address_by_offset(
-            pred_offset, ling_ann)
+        pred_ling_sent, pred_ling_word = self.find_address_by_offset(pred_offset, ling_ann)
 
         for arg in args:
             arg_offset = offset_index[(arg[0], arg[1])]
-            arg_ling_sent, arg_ling_word = self.find_address_by_offset(
-                arg_offset, ling_ann)
-
-            # print("-"*20)
-            #print('ex_id: ', ex_id)
-            #print('ling_ann_sent: ', arg_ling_sent)
-            #print('total number of postags: ', len(ling_ann['postag']))
-            #print('total number of morph featues: ', len(ling_ann['morph']))
-            #print('total number of lemmas: ', len(ling_ann['lemma']))
-            #print('total number of syntax trees: ', len(ling_ann['syntax_dep_tree']))
+            arg_ling_sent, arg_ling_word = self.find_address_by_offset(arg_offset, ling_ann)
 
             lens = {
                 'len_postags': len(ling_ann['postag']),
@@ -49,11 +39,6 @@ class FeatureModeling(object):
                 'len_lemma': len(ling_ann['lemma']),
                 'len_syntax': len(ling_ann['syntax_dep_tree'])
             }
-
-            # print("-"*20)
-            # print(ex_id)
-            # print(lens)
-            #print("arg_ling_sent: ", arg_ling_sent)
 
             if arg_ling_sent > min(lens.values()) or len(set(lens.values())) != 1:
                 lens['len_arg_ling_sent'] = arg_ling_sent
