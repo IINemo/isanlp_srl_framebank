@@ -4,7 +4,7 @@ import tensorflow as tf
 class SimpleModel(tf.keras.Model):
     def __init__(self, hidden_1=600, hidden_2=400, dropout_1=0.3, dropout_2=0.3, number_of_roles=34):
         super(SimpleModel, self).__init__(name='simple_model')
-        self.fc1 = nn.Dense(units=hidden_1, activation=tf.nn.relu)
+        self.fc1 = nn.Dense(units=hidden_1, activation=tf.keras.activations.relu, input_shape=(976,))
         self.dropout1 = nn.Dropout(rate=dropout_1)
         self.dropout2 = nn.Dropout(rate=dropout_2)
         self.fc2 = nn.Dense(units=hidden_2)
@@ -16,10 +16,10 @@ class SimpleModel(tf.keras.Model):
         x = self.fc1(inputs)
         x = self.dropout1(x)
         x = self.fc2(x)
-        x = tf.nn.relu(self.bn1(x))
+        x = tf.keras.activations.relu(self.bn1(x))
         x = self.dropout2(x)
         x = self.bn2(self.fc3(x))
-        return tf.nn.softmax(x)
+        return tf.keras.activations.softmax(x)
 
 class SparseModel(tf.keras.Model):
     def __init__(self, hidden_categorical=400, hidden_embeddings=100, hidden_final=400, dropout_1=0.3, dropout_2=0.3, number_of_roles=34):

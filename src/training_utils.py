@@ -3,11 +3,11 @@ from sklearn.model_selection import KFold
 
 DEFAULT_CV = KFold(n_splits=5, random_state=42)
 
-def compile_model(model_fn,  input_shape, optimizer='adam',):
+def compile_model(model_fn, optimizer='adam',):
     def get_model():
         model = model_fn()
         model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-        model.build(input_shape=input_shape)
+        #model.build(input_shape=input_shape)
         return model
 
     return get_model

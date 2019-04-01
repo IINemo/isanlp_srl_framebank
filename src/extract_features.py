@@ -217,14 +217,14 @@ if __name__ == "__main__":
     print("Ok", flush=True)
 
     print("\tArgument and Predicate embedding...", end="", flush=True)
-    embedded_args = embed_single(embeddings, dataframe.arg_lemma)
-    embedded_verbs = embed_single(embeddings, dataframe.pred_lemma)
+    embedded_args = embed_single(embeddings, X.arg_lemma)
+    embedded_verbs = embed_single(embeddings, X.pred_lemma)
     print("Ok", flush=True)
 
     print("\tFeature vectorizing...", end="", flush=True)
-    categorical, non_categorical = get_feature_names(dataframe)
-    one_hot, vectorizer = train_feature_vectorizer(dataframe, categorical)
-    plain_features = generate_features_array(dataframe, one_hot, non_categorical)
+    categorical, non_categorical = get_feature_names(X)
+    one_hot, vectorizer = train_feature_vectorizer(X, categorical)
+    plain_features = generate_features_array(X, one_hot, non_categorical)
     print("Ok", flush=True)
     print("..Done!")
 
