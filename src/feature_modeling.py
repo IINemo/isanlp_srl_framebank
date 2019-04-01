@@ -7,6 +7,7 @@ class FeatureModelingTool(object):
         self.ling_cache = ling_cache
         self.feature_extractor = feature_extractor
         self.error_examples = {}
+        self.num_of_errors
 
     def find_address_by_offset(self, offset, ling_ann):
         for tok_num, tok in enumerate(ling_ann['tokens']):
@@ -53,8 +54,7 @@ class FeatureModelingTool(object):
             role = fb_arg_word['rolepred1']
 
             if arg_ling_sent != pred_ling_sent:
-                global num_of_errors
-                num_of_errors += 1
+                self.num_of_errors += 1
                 # We miss some examples due to mistakes in framebank or discrepancy in
                 # automatica annotation of sentences.
                 #print('Error #{}'.format(num_of_errors))

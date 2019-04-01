@@ -32,7 +32,7 @@ DEFAULT_REPL_ROLES = {
 }
 
 def generate_feature_dataframe(examples, feature_modelling_tool: FeatureModelingTool):
-    feature_sets = feature_modelling_tool.prepare_train_data(examples, ling_data_cache, feature_model)
+    feature_sets = feature_modelling_tool.prepare_train_data(examples)
 
     data_for_pandas = []
     for example in feature_sets:
@@ -205,8 +205,11 @@ if __name__ == "__main__":
     print("..Done!")
 
     X, y = split_to_x_y(dataframe)
+    print("")
     print("-"*40)
     print(f"Shapes: X: {X.shape}, Y: {y.shape}")
+    print("-"*40)
+    print("")
 
     print("5. Feature and label processing")
     print("\tLabel encoding...", end="", flush=True)
@@ -240,6 +243,7 @@ if __name__ == "__main__":
     with open(args.feature_encoder, "wb") as f:
         pickle.dump(vectorizer, f)
     print("Ok", flush=True)
+    print("..Done!")
 
     print("7. Saving results")
     print("\tLabels...", end="", flush=True)
@@ -254,3 +258,4 @@ if __name__ == "__main__":
     print("\tPlain Features...", end="", flush=True)
     np.save(args.plain_features, plain_features)
     print("Ok", flush=True)
+    print("..Done!")
