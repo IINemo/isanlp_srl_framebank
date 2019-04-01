@@ -23,14 +23,6 @@ from isanlp_srl_framebank import make_text
 from isanlp_srl_framebank.processor_srl_framebank import FeatureModelDefault
 from isanlp.annotation_repr import CSentence
 
-#!!!: Choose feature model here
-feature_model = FeatureModelDefault()
-
-# from isanlp_srl_framebank.processor_srl_framebank import FeatureModelUnknownPredicates
-# feature_model = FeatureModelUnknownPredicates()
-# main_model_path = os.path.join(main_model_path_root, 'unknown_preds')
-print("2. Extracting features...")
-
 DEFAULT_REPL_ROLES = {
     'агенс - субъект восприятия': 'субъект восприятия',
     'агенс - субъект ментального состояния': 'субъект ментального состояния',
@@ -74,7 +66,7 @@ def normalize_roles(data_frame, repl_roles):
     for rep, val in repl_roles.items():
         normalize_single_region(data_frame, rep, val)
 
-    number_of_roles = len(clear_data.loc[:, 'role'].value_counts().index)
+    number_of_roles = len(data_frame.loc[:, 'role'].value_counts().index)
 
     return data_frame, number_of_roles
 
@@ -89,15 +81,9 @@ def train_label_encoder(labels):
     y = label_encoder.fit_transform(labels)
     return y, label_encoder
 
-embedded_args = embed_single(embeddings, X_orig.arg_lemma)
-embedded_verbs = embed_single(embeddings, X_orig.pred_lemma)
-
-np.save(args.verb_embed_file, embedded_verbs, allow_pickle=False)
-np.save(args.arg_embed_file, embedded_args, allow_pickle=False)
-
 def get_feature_names(dataframe, not_categ_features={'arg_address', 'ex_id', 'rel_pos', 'arg_lemma'}):
     categ_feats = [
-        name for name in X_orig.columns if name not in not_categ_features]
+        name for name in dataframe.columns if name not in not_categ_features]
     not_categ = ['rel_pos']
 
     return categ_feats, not_categ
@@ -105,7 +91,7 @@ def get_feature_names(dataframe, not_categ_features={'arg_address', 'ex_id', 're
 def train_feature_vectorizer(dataframe, categ_features):
     vectorizer = DictVectorizer(sparse=False)
     one_hot_feats = vectorizer.fit_transform(
-        dataframe.loc[:, categ_feats].to_dict(orient='records')
+        dataframe.loc[:, categ_features].to_dict(orient='records')
     )
     return one_hot_feats, vectorizer
 
@@ -114,8 +100,6 @@ def generate_features_array(dataframe, one_hot_feats, not_categ):
         tuple(dataframe.loc[:, e].values.reshape(-1, 1) for e in not_categ), axis=1)
     plain_features = np.concatenate((one_hot_feats, not_categ_columns), axis=1)
     return plain_features
-
-np.save(args.plain_features_file, plain_features)
 
 if __name__ == "__main__":
 
@@ -141,21 +125,45 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         '--out-plain-features',
-        nargs='?', dest='plain_features_file',
+        nargs='?', dest='plain_features',
         default='../data/plain_features.npy',
         help='where to save plain features table (in .npy format)'
     )
     parser.add_argument(
         '--out-verb-embed',
-        nargs='?', dest='verb_embed_file',
+        nargs='?', dest='verb_embed',
         default='../data/verb_embedded.npy',
         help='where to save embeddings for verbs (in .npy format)'
     )
     parser.add_argument(
         "--out-arg-embed",
-        nargs='?', dest='arg_embed_file',
+        nargs='?', dest='arg_embed',
         default="../data/arg_embedded.npy",
         help="where to save embeddings for arguments (in .npy format)"
+    )
+    parser.add_argument(
+        "--out-labels",
+        nargs='?', dest="labels",
+        default="../data/labels.npy",
+        help='where to save labels'
+    )
+    parser.add_argument(
+        "--out-feature-model",
+        nargs="?", dest="feature_model",
+        default="./feature_model.pckl",
+        help='where to save feature model'
+    )
+    parser.add_argument(
+        "--out-label-encoder",
+        nargs="?", dest='label_encoder',
+        default="./label_encoder.pckl",
+        help="where to save label encoder"
+    )
+    parser.add_argument(
+        "--out-feature-encoder",
+        nargs='?', dest='feature_encoder',
+        default="./feature_encoder.pckl",
+        help='where to save feature encoder'
     )
     args = parser.parse_args()
 
@@ -165,20 +173,20 @@ if __name__ == "__main__":
     with open(args.corpus_file, 'r') as f:
         examples = json.load(f)
 
-    print("OK", flush=True)
+    print("Ok", flush=True)
     print(f'\tLing data file: ({args.ling_data_file})', end="....", flush=True)
 
     with open(args.ling_data_file, 'rb') as f:
         ling_data = pickle.load(f)
     ling_data_cache = {k: v for k, v in ling_data}
 
-    print("OK", flush=True)
+    print("Ok", flush=True)
     print(f"\tEmbeddings file: ({args.embeddings_file})", end="....", flush=True)
 
     embeddings = KeyedVectors.load_word2vec_format(
         args.embeddings_file, binary=False)
 
-    print("OK", flush=True)
+    print("Ok", flush=True)
     print("..Done!")
 
     print("2. Initializing feature models")
@@ -192,7 +200,7 @@ if __name__ == "__main__":
 
     print("4. Clearing and role normalizing")
     dataframe = clear_unfrequent_roles(dataframe)
-    dataframe, n_roles = normalize_roles(data_frame, DEFAULT_REPL_ROLES)
+    dataframe, n_roles = normalize_roles(dataframe, DEFAULT_REPL_ROLES)
     print(f"Number of roles: {n_roles}")
     print("..Done!")
 
@@ -201,6 +209,48 @@ if __name__ == "__main__":
     print(f"Shapes: X: {X.shape}, Y: {y.shape}")
 
     print("5. Feature and label processing")
-    print("\tLabel encoding...")
+    print("\tLabel encoding...", end="", flush=True)
     y, label_encoder = train_label_encoder(y)
-    print("\t")
+    print("Ok", flush=True)
+
+    print("\tArgument and Predicate embedding...", end="", flush=True)
+    embedded_args = embed_single(embeddings, dataframe.arg_lemma)
+    embedded_verbs = embed_single(embeddings, dataframe.pred_lemma)
+    print("Ok", flush=True)
+
+    print("\tFeature vectorizing...", end="", flush=True)
+    categorical, non_categorical = get_feature_names(dataframe)
+    one_hot, vectorizer = train_feature_vectorizer(dataframe, categorical)
+    plain_features = generate_features_array(dataframe, one_hot, non_categorical)
+    print("Ok", flush=True)
+    print("..Done!")
+
+    print("6. Saving models")
+    print("\tFeature Model...", end="", flush=True)
+    with open(args.feature_model, 'wb') as f:
+        pickle.dump(feature_model, f)
+    print("Ok", flush=True)
+    
+    print("\tLabel Encoder...", end="", flush=True)
+    with open(args.label_encoder, "wb") as f:
+        pickle.dump(label_encoder, f)
+    print("Ok", flush=True)
+
+    print("\tFeature Encoder...", end="", flush=True)
+    with open(args.feature_encoder, "wb") as f:
+        pickle.dump(vectorizer, f)
+    print("Ok", flush=True)
+
+    print("7. Saving results")
+    print("\tLabels...", end="", flush=True)
+    np.save(args.labels, y)
+    print("Ok", flush=True)
+    
+    print("\tEmbeddings...", end="", flush=True)
+    np.save(args.arg_embed, embedded_args)
+    np.save(args.verb_embed, embedded_verbs)
+    print("Ok", flush=True)
+
+    print("\tPlain Features...", end="", flush=True)
+    np.save(args.plain_features, plain_features)
+    print("Ok", flush=True)
