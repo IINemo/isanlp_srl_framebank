@@ -1,6 +1,7 @@
 from sklearn.metrics import confusion_matrix, accuracy_score, f1_score
 from sklearn.model_selection import KFold
 import numpy as np
+import pandas as pd
 
 DEFAULT_CV = KFold(n_splits=5, random_state=42)
 

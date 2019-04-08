@@ -1,5 +1,6 @@
-from tensorflow.keras import layers as nn
+import tensorflow.keras.layers as nn
 import tensorflow as tf
+
 
 class SimpleModelFactory(object):
     def __init__(self, input_dim, hidden_1=600, hidden_2=400, dropout_1=0.3, dropout_2=0.3, number_of_roles=34):
@@ -43,7 +44,7 @@ class SparseModelFactory(object):
     def create(self):
         input_categorical = nn.Input(shape=(self.input_dims[0],), name='input-categorical')
         input_pred = nn.Input(shape=(self.input_dims[1],), name='input-predicate-embeddings')
-        input_arg = nn.Input(shape=(self.input_dims[2],), name='')
+        input_arg = nn.Input(shape=(self.input_dims[2],), name='input-argument-embeddings')
 
         categorical = nn.Dense(self.hidden_categorical)(input_categorical)
         categorical = nn.BatchNormalization()(categorical)
@@ -74,4 +75,3 @@ class SparseModelFactory(object):
         model = self.create()
         model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
         return model
-    
