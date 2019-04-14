@@ -24,38 +24,40 @@ from isanlp_srl_framebank import make_text, create_verb_example_index
 
 class UdpipePipeline(object):
 
-    def __init__(self, basic_processor=('exn40.isa.ru', 3333), udpipe_processor=('exn40.isa.ru', 3344)):
-        self.ppl = PipelineCommon([
-                (
-                    ProcessorRemote(basic_processor[0], basic_processor[1], 'default'),
-                    ['text'],
-                    {
-                        'sentences' : 'sentences', 
-                        'tokens' : 'tokens',
-                        'postag' : 'postag',
-                        'lemma' : 'lemma'
-                    }
-                ),
-                (
-                    ProcessorRemote(udpipe_processor[0], udpipe_processor[1], 'default'), 
-                    ['tokens', 'sentences'], 
-                    {
-                        'syntax_dep_tree' : 'syntax_dep_tree'
-                    }
-                ),
-                (
-                    ConverterMystemToUd(),
-                    ['postag'],
-                    {
-                        'morph' : 'morph',
-                        'postag': 'postag'
-                    }
-                )
-        ])
+    def __init__(self, basic_processor=('vmh1.isa.ru', 3344), udpipe_processor=('vmh1.isa.ru', 3355)):
+        self.ppl = WrapperMultiProcessDocument([
+                    PipelineCommon([
+                        (
+                            ProcessorRemote(basic_processor[0], basic_processor[1], 'default'),
+                            ['text'],
+                            {
+                                'sentences' : 'sentences', 
+                                'tokens' : 'tokens',
+                                'postag' : 'mystem_postags',
+                                'lemma' : 'lemma'
+                            }
+                        ),
+                        (
+                            ProcessorRemote(udpipe_processor[0], udpipe_processor[1], '0'), 
+                            ['tokens', 'sentences'], 
+                            {
+                                'syntax_dep_tree' : 'syntax_dep_tree'
+                            }
+                        ),
+                        (
+                            ConverterMystemToUd(),
+                            ['mystem_postags'],
+                            {
+                                'morph' : 'postag',
+                            }
+                        )
+                    ])
+                ])
+
         
 
-    def __call__(self, text):
-        return self.ppl(text)
+    def __call__(self, texts):
+        return self.ppl(texts)
 
 
 def split_and_process(data, piplene_fn, n_splits=5):
@@ -65,7 +67,7 @@ def split_and_process(data, piplene_fn, n_splits=5):
 
     for data_pt in data_pts:
         texts = [make_text(example, 0)[0] for (ex_id, example) in data_pt]
-        result_pt = [ppl(text) for text in tqdm(texts)]
+        result_pt = ppl(texts)
         result_pts.append(result_pt)
 
     results = []
