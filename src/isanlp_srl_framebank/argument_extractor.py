@@ -1,13 +1,14 @@
-from .preposition_extract import COMPLEX_PREP_CASES
+from .preposition_extract import in_complex_preposition, complex_preposition_child, get_children
 
 
 class ArgumentExtractor:
-    ARGUMENT_POSTAGS = (
+    ARGUMENT_POSTAGS = {
         'NOUN',
         'PRON',
         'ADJ',
-    )
-
+        'PROPN'
+    }
+    
     LN_HOMOGENEOUS = 'conj'
     LN_AGENT = 'nsubj'
     LN_DIRECTION = 'nmod'
@@ -19,33 +20,37 @@ class ArgumentExtractor:
         expanded_args = self._get_conj_args(pred_number, postags, morphs, lemmas, syntax_dep_tree)
 
         return arguments + expanded_args
-
+        
+        
     def _get_own_args(self, pred_number, postags, morphs, lemmas, syntax_dep_tree):
-        arguments = list()
-        children = [child_number for child_number, child_syntax in enumerate(syntax_dep_tree) if
-                    child_syntax.parent == pred_number]
+        """ Return list of arguments for predicate in the sentence """
 
-        try:
-            for child_number in children:
-                lemma_child, postag_child = lemmas[child_number], postags[child_number]
-
-                if postag_child in self.ARGUMENT_POSTAGS:
-
-                    # check if there is a complex preposition
-                    if lemma_child in COMPLEX_PREP_CASES and 'Case' in morphs[child_number]:
-                        if morphs[child_number]['Case'] == COMPLEX_PREP_CASES[lemma_child]:
-                            child_number = \
-                                [nextword_number for nextword_number, nextword in enumerate(syntax_dep_tree) if
-                                 nextword.parent == child_number][-1]
-
-                if postags[child_number] in self.ARGUMENT_POSTAGS:
-                    arguments.append(child_number)
-
-        except IndexError:
-            pass
+        arguments = []
+        children = get_children(pred_number, syntax_dep_tree)
+            
+        for child_number in children:
+            lemma_child  = lemmas[child_number]
+            postag_child = postags[child_number]
+                
+            prep = in_complex_preposition(child_number, postags, morphs, lemmas, syntax_dep_tree)
+            if prep:
+                arg_num = complex_preposition_child(prep, syntax_dep_tree)
+                if arg_num is None:
+                    continue
+                        
+                if postags[arg_num] not in self.ARGUMENT_POSTAGS:
+                    continue
+                    
+                arguments.append(arg_num)
+            else:
+                if postags[child_number] not in self.ARGUMENT_POSTAGS:
+                    continue
+                    
+                arguments.append(child_number)
 
         return arguments
 
+    
     def _get_conj_args(self, pred_number, postags, morphs, lemmas, syntax_dep_tree):
 
         def is_homogen_pair(a, b):
@@ -73,3 +78,4 @@ class ArgumentExtractor:
             result += expand_linkname(arguments, self.LN_DIRECTION)
 
         return result
+    

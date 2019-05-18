@@ -194,7 +194,7 @@ class ProcessorSrlFramebank:
                 args = self._argument_extractor(pred, sent_postag, sent_morph, 
                                                 sent_lemma, sent_syntax_dep_tree)
                 if not args:
-                    continue;
+                    continue
                 
                 arg_roles = [self._process_argument(model,
                                                     pred, 
