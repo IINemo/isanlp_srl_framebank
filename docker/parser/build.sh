@@ -6,5 +6,5 @@ if [ ! -d $script_dir/isanlp_srl_framebank ]; then
 fi
 rsync -r $script_dir/../../src/ $script_dir/isanlp_srl_framebank/src
 rsync -r $script_dir/../../models/ $script_dir/models
-docker build -t inemo/isanlp_srl_framebank $script_dir
+nvidia-docker build -t tchewik/isanlp_srl_framebank $script_dir
 

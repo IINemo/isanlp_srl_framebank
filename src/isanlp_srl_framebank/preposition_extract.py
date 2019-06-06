@@ -109,6 +109,7 @@ def extract_preposition(arg_number, postags, morph, lemmas, syntax_dep_tree):
     """ Returns preposition for a word in the sentence """
 
     #TODO: fix duplication
+    #TODO: there was a list of words for complex preposition, as we use the whole preposition as a feature
     
     children = get_children(arg_number, syntax_dep_tree)
 

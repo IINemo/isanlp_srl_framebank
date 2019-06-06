@@ -46,7 +46,7 @@ class ArgumentExtractor:
             prep = in_complex_preposition(child_number, postags, morphs, lemmas, syntax_dep_tree)
             if prep:
                 arg_num = complex_preposition_child(prep, syntax_dep_tree)
-                if not arg_num:
+                if arg_num is None:
                     continue
 
                 if postags[arg_num] not in self.ARGUMENT_POSTAGS:
@@ -105,6 +105,7 @@ class ArgumentExtractor:
             return result[0]
 
         subjlink = "nsubj"
+        subject = None
         for argument in arguments:
             if syntax_dep_tree[argument].link_name in subjlink:
                 subject = argument
@@ -112,7 +113,7 @@ class ArgumentExtractor:
                 second_name = _find_subject_name(name)  # nsubj -> appos -> name
                 if second_name:
                     name = second_name
-                return subject, name
+                return (subject, name)
         return []
 
     def _get_first_part(self, pred_number, syntax_dep_tree):
