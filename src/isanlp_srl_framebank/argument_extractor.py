@@ -20,12 +20,9 @@ class ArgumentExtractor:
         expanded_args = self._get_conj_args(pred_number, postags, morphs, lemmas, syntax_dep_tree)
         result = list(set(arguments + expanded_args))
 
-        possible_subject = self._get_subject(arguments, syntax_dep_tree)
+        possible_subject = self._get_subject(arguments, postags, syntax_dep_tree)
         if not possible_subject:
-            first_part = self._get_first_part(pred_number, syntax_dep_tree)
-            if first_part:
-                possible_subject = self._get_subject(
-                    self._get_conj_args(first_part, postags, morphs, lemmas, syntax_dep_tree), syntax_dep_tree)
+            possible_subject = self._get_adv_cascade_subject(pred_number, postags, morphs, lemmas, syntax_dep_tree)
 
         if possible_subject and possible_subject[1]:
             for i, n in enumerate(result):
@@ -90,35 +87,72 @@ class ArgumentExtractor:
         for predicate in conj_predicates:
             arguments = self._get_own_args(predicate, postags, morphs, lemmas, syntax_dep_tree)
             result += expand_linkname(arguments, self.LN_AGENT)
-            possible_directions = expand_linkname(arguments, self.LN_DIRECTION)
-            result += possible_directions
 
         return result
 
-    def _get_subject(self, arguments, syntax_dep_tree):
+    def _get_subject(self, arguments, postags, syntax_dep_tree):
+
         def _find_subject_name(subject):
-            namelink = ["name", "appos"]
+            if postags[subject] != 'NOUN':
+                return None
+
+            namelink = ['name', 'appos']
             result = [i for i, token in enumerate(syntax_dep_tree) if
                       token.link_name in namelink and token.parent == subject]
             if not result:
                 return None
             return result[0]
 
-        subjlink = "nsubj"
-        subject = None
         for argument in arguments:
-            if syntax_dep_tree[argument].link_name in subjlink:
+            if syntax_dep_tree[argument].link_name in self.LN_AGENT:
                 subject = argument
-                name = _find_subject_name(subject)  # nsubj -> name || nsubj -> appos
-                second_name = _find_subject_name(name)  # nsubj -> appos -> name
-                if second_name:
-                    name = second_name
-                return (subject, name)
+                name = _find_subject_name(subject)
+                if name:
+                    second_name = _find_subject_name(name)
+                    if second_name:
+                        name = second_name
+                return subject, name
         return []
 
     def _get_first_part(self, pred_number, syntax_dep_tree):
-        """ Looks for the first verb of quasi-complex predicates """
-        xcomplink = "xcomp"
+        """ Return the first verb of quasi-complex predicates """
+
+        xcomplink = 'xcomp'
         if syntax_dep_tree[pred_number].link_name == xcomplink:
             return syntax_dep_tree[pred_number].parent
         return None
+
+    def _get_adv_cascade_subject(self, pred_number, postags, morphs, lemmas, syntax_dep_tree):
+        """ Return a subject for participle phrases """
+
+        possible_subject = None
+        first_part = self._get_first_part(pred_number, syntax_dep_tree)
+        if first_part:
+            possible_subject = self._get_subject(
+                self._get_own_args(first_part, postags, morphs, lemmas, syntax_dep_tree), postags, syntax_dep_tree)
+            if not possible_subject:
+                conjunct = self._get_direct_link(first_part, syntax_dep_tree, self.LN_HOMOGENEOUS)
+                if conjunct:
+                    possible_subject = self._get_subject(
+                        self._get_own_args(conjunct, postags, morphs, lemmas, syntax_dep_tree), postags,
+                        syntax_dep_tree)
+                    if not possible_subject:
+                        advcl = self._get_direct_link(conjunct, syntax_dep_tree, 'advcl')
+                        if advcl:
+                            possible_subject = self._get_subject(
+                                self._get_own_args(advcl, postags, morphs, lemmas, syntax_dep_tree), postags,
+                                syntax_dep_tree)
+                            if not possible_subject:
+                                first_part = self._get_first_part(advcl, syntax_dep_tree)
+                                if first_part:
+                                    possible_subject = self._get_subject(
+                                        self._get_own_args(first_part, postags, morphs, lemmas, syntax_dep_tree),
+                                        postags, syntax_dep_tree)
+
+        return possible_subject
+
+    def _get_direct_link(self, pred_number, syntax_dep_tree, linkname):
+
+        if syntax_dep_tree[pred_number].link_name != linkname:
+            return None
+        return syntax_dep_tree[pred_number].parent
