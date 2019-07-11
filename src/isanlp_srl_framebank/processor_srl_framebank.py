@@ -31,6 +31,14 @@ logging.basicConfig(filename="sample.log", level=logging.INFO)
 class FeatureModelDefault:
     def extract_features(self, pred, arg, postag,
                          morph, lemma, syntax_dep_tree):
+        
+        def prepos_lemma(position):
+            if not position:
+                return ''
+            if type(position) == int:
+                return lemma[position]
+            return '~'.join([lemma[e] for e in position])
+            
         arg_pos = postag[arg]
         arg_case = morph[arg].get('Case', '')
         pred_pos = postag[pred]
@@ -45,8 +53,7 @@ class FeatureModelDefault:
                                            'VerbForm', 'Animacy',
                                            'Gender']}
 
-        #prepos = '~'.join([lemma[e] for e in preposition_nums])
-        prepos = extract_preposition(arg, postag, morph, lemma, syntax_dep_tree)
+        prepos = prepos_lemma(extract_preposition(arg, postag, morph, lemma, syntax_dep_tree))
 
         features_categorical = {'dist': dist,
                                 'arg_case': arg_case,
