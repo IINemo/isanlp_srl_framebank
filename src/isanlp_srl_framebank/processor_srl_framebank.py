@@ -124,13 +124,15 @@ class ProcessorSrlFramebank:
     def init(self):
         if not self._model_known_preds:
             if not self._embeddings:
+                logger.info(f'Model has no self._embeddings! Loading {os.path.join(self.model_dir_path, "embeddings.vec")}')
                 self._embeddings = KeyedVectors.load_word2vec_format(os.path.join(self.model_dir_path,
                                                                                   'embeddings.vec'),
                                                                      binary=False)
 
             with open(os.path.join(self.model_dir_path, 'known_preds.json'), 'r', encoding='utf8') as f:
                 self._known_preds = set(json.load(f))
-
+                            
+            logger.info('Loading the model for known predicates...')
             self._model_known_preds = ModelProcessorSrlFramebank(os.path.join(self.model_dir_path, 'known_preds'))
             logger.info('Model for known predicates is loaded.')
 
