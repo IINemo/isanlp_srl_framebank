@@ -1,5 +1,6 @@
 from tensorflow.python.keras.models import load_model
 from gensim.models import KeyedVectors
+from deeppavlov.models.embedders.elmo_embedder import ELMoEmbedder
 from scipy.optimize import linear_sum_assignment
 from sklearn.preprocessing import LabelBinarizer
 import numpy as np
@@ -86,9 +87,12 @@ class FeatureModelUnknownPredicates:
 
 
 class ModelProcessorSrlFramebank:
-    def __init__(self, model_dir_path):
+    def __init__(self, model_dir_path, embeddings_type):
+        self._model_dir_path = model_dir_path,
         self._model = load_model(os.path.join(model_dir_path, 'neural_model.h5'))
         self._model._make_predict_function()
+        self._embeddings_type = embeddings_type
+        self._embeddings = self._load_embeddings()
 
         with open(os.path.join(model_dir_path, 'feature_encoder.pckl'), 'rb') as f:
             self._categorical_encoder = pickle.load(f)
@@ -98,12 +102,48 @@ class ModelProcessorSrlFramebank:
 
         with open(os.path.join(model_dir_path, 'feature_model.pckl'), 'rb') as f:
             self._feature_model = pickle.load(f)
+        
+    def _load_embeddings(self):
+        if type(self._model_dir_path) == tuple:
+            self._model_dir_path = self._model_dir_path[0]
+            
+        if self._embeddings_type == 'w2v':
+            embedding_path = os.path.join(self._model_dir_path, 'embeddings.vec')
+            logger.info(f'Model has no embeddings! Loading {embedding_path}')
+            return KeyedVectors.load_word2vec_format(embedding_path, binary=False)
+        
+        elif self._embeddings_type == 'elmo':
+            embedding_path = "http://files.deeppavlov.ai/deeppavlov_data/elmo_ru-wiki_600k_steps.tar.gz"
+            logger.info(f'Model has no embeddings! Loading {embedding_path}')
+            return ELMoEmbedder(embedding_path, elmo_output_names=['elmo'])
+        
+    def _vectorize_embeddings(self, feature_embeddings):
+        def type_w2v():
+            results = []
+            for word in feature_embeddings.values():
+                if word in self._embeddings:
+                    results.append(self._embeddings[word])
+                else:
+                    results.append(np.zeros((self._embeddings.vector_size,)))
+
+            return np.concatenate(results)
+                                
+        def type_elmo():
+            # ToDO: work with tags carefully
+            return self._embeddings([[value[:value.rfind('_')] for value in feature_embeddings.values()]])[0]
+                                
+        if self._embeddings_type == 'w2v':
+            return type_w2v()
+        
+        if self._embeddings_type == 'elmo':
+            return type_elmo()
+        
+    
 
 
 class ProcessorSrlFramebank:
     def __init__(self,
                  model_dir_path,
-                 embeddings=None,
                  predicate_extractor=PredicateExtractor(),
                  argument_extractor=ArgumentExtractor(),
                  enable_model_for_unknown_predicates=True,
@@ -111,47 +151,36 @@ class ProcessorSrlFramebank:
                  delay_init=False):
 
         self.model_dir_path = model_dir_path
-        self._embeddings = embeddings
         self._predicate_extractor = predicate_extractor
         self._argument_extractor = argument_extractor
         self.enable_model_for_unknown_predicates = enable_model_for_unknown_predicates
         self._enable_global_scoring = enable_global_scoring
 
         self._model_known_preds = None
+        self._model_unknown_preds = None
         if not delay_init:
             self.init()
 
     def init(self):
         if not self._model_known_preds:
-            if not self._embeddings:
-                logger.info(f'Model has no self._embeddings! Loading {os.path.join(self.model_dir_path, "embeddings.vec")}')
-                self._embeddings = KeyedVectors.load_word2vec_format(os.path.join(self.model_dir_path,
-                                                                                  'embeddings.vec'),
-                                                                     binary=False)
-
             with open(os.path.join(self.model_dir_path, 'known_preds.json'), 'r', encoding='utf8') as f:
                 self._known_preds = set(json.load(f))
                             
             logger.info('Loading the model for known predicates...')
-            self._model_known_preds = ModelProcessorSrlFramebank(os.path.join(self.model_dir_path, 'known_preds'))
+            self._model_known_preds = ModelProcessorSrlFramebank(os.path.join(self.model_dir_path, 'known_preds'), 
+                                                                 embeddings_type='elmo')
             logger.info('Model for known predicates is loaded.')
 
+        if not self._model_unknown_preds:
             path_model_unknown_preds = os.path.join(self.model_dir_path, 'unknown_preds')
             if self.enable_model_for_unknown_predicates and os.path.exists(path_model_unknown_preds):
-                self._model_unknown_preds = ModelProcessorSrlFramebank(path_model_unknown_preds)
+                self._model_unknown_preds = ModelProcessorSrlFramebank(path_model_unknown_preds, 
+                                                                       embeddings_type='w2v')
                 logger.info('Model for unknown predicates is loaded.')
             else:
                 self._model_unknown_preds = None
 
-    def _vectorize_embeddings(self, feature_embeddings):
-        results = []
-        for word in feature_embeddings.values():
-            if word in self._embeddings:
-                results.append(self._embeddings[word])
-            else:
-                results.append(np.zeros((self._embeddings.vector_size,)))
-
-        return np.concatenate(results)
+    
 
     def _vectorize_categorical(self, model, feature_categ):
         return model._categorical_encoder.transform(feature_categ).reshape(-1)
@@ -163,7 +192,7 @@ class ProcessorSrlFramebank:
             if feat[0]:
                 vectorized_feats.append(self._vectorize_categorical(model, feat[0]))
             if feat[1]:
-                vectorized_feats.append(self._vectorize_embeddings(feat[1]))
+                vectorized_feats.append(model._vectorize_embeddings(feat[1]))
             if feat[2]:
                 vectorized_feats.append(np.array(list(feat[2].values())))
 
@@ -218,7 +247,7 @@ class ProcessorSrlFramebank:
                     logger.info('Using model for unknown predicates.')
 
                 args = self._argument_extractor(pred, sent_postag, sent_morph,
-                                                sent_lemma, sent_syntax_dep_tree)  # works fine
+                                                sent_lemma, sent_syntax_dep_tree)
 
                 if args:
                     arg_roles = [self._process_argument(model,

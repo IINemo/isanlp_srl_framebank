@@ -7,7 +7,9 @@ docker cp processor_srl_framebank.py $1:/src/isanlp_srl_framebank/src/isanlp_srl
 docker cp ../../data/models_new/known_preds/feature_encoder.pckl $1:/models/known_preds/feature_encoder.pckl
 docker cp ../../data/models_new/known_preds/feature_model.pckl $1:/models/known_preds/feature_model.pckl
 docker cp ../../data/models_new/known_preds/label_encoder.pckl $1:/models/known_preds/label_encoder.pckl
-docker exec $1 pip install tensorflow==1.12.0
+docker exec $1 pip install -U pip
+docker exec $1 pip install tensorflow==1.12.0 deeppavlov tensorflow-hub
 docker cp ../../data/models_new/known_preds/neural_model.h5 $1:/models/known_preds/neural_model.h5
+docker exec $1 cp /models/embeddings.vec /models/unknown_preds/embeddings.vec
 
-docker restart chistova_framebank
+docker restart $1
