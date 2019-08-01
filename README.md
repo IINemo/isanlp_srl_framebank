@@ -12,22 +12,29 @@ Note: the library is considered for Python 3.6. If you do not have one, checkout
 1. Install IsaNLP and its dependencies:
 ```
 pip install grpcio
-pip install git+https://github.com/IINemo/isanlp
+pip install git+https://github.com/IINemo/isanlp.git
 ```  
 2. Install IsaNLP SRL FrameBank library:
 ```
-pip install git+https://github.com/IINemo/isanlp_srl_framebank
+pip install git+https://github.com/IINemo/isanlp_srl_framebank.git
 ```  
 
 ### Full
 1. Do the same steps for Quick installation.
 2. Install gensim, tensorflow, numpy, sklearn:
 ```
-pip install gensim==3.4.0 tensorflow==1.4.0 numpy sklearn
+pip install gensim==3.6.0 smart-open==1.7.0 tensorflow==1.12.0 numpy sklearn
 ```  
+3. Load the neural models from Git LFS
+```
+curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+sudo apt-get install git-lfs
+git lfs install
+git-lfs pull
+```
 
 ## Quick start with docker (< 10 mins)
-1. Depoy docker containers for morphology, syntax, and SRL parsing:  
+1. Deploy docker containers for morphology, syntax, and SRL parsing:  
 ```
 docker run --rm -p 3333:3333 inemo/isanlp
 docker run --rm --shm-size=1024m -ti -p 3334:9999 inemo/syntaxnet_rus server 0.0.0.0 9999
@@ -116,9 +123,10 @@ The `model_dir_path` should contain:
 
 After initialization the object is ready for parsing using `__call__` function:  
 ```python  
-  res = srl_proc(postag, morph, lemma, syntax_dep_tree)
+  res = srl_proc(tokens, postag, morph, lemma, syntax_dep_tree)
 ```  
 The input arguments are:
+   * tokens -- a list of tokens.
    * postag -- a list of lists of postags in Universal Dependencies format (the first list means sentences, the second list means words in the sentence).
    * morph -- a list of lists of morphological features in Universal Dependencies format.
    * lemma -- a list of lists of lemmas.
@@ -218,7 +226,7 @@ TBD:
 
 ## Compatability
 The library should be compatible at least with Python 3.6.  
-Tested with gensim==3.4.0 tensorflow==1.4.0 .
+Tested with gensim==3.6.0 tensorflow==1.12.0 .
 
 ## Cite / Reference 
 The models for SRL were published in [Dialog proceedings](http://www.dialog-21.ru/media/3945/shelmanovaodevyatkinda.pdf).  

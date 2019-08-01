@@ -29,6 +29,10 @@ logging.basicConfig(filename="sample.log", level=logging.INFO)
 # TODO: non-core roles
 # TODO: refactor
 
+# select type of embeddings for each model here ('w2v' | 'elmo')
+_KNOWN_PREDS_EMBEDDINGS = 'elmo'
+_UNKNOWN_PREDS_EMBEDDINGS = 'w2v'
+
 class FeatureModelDefault:
     def extract_features(self, pred, arg, postag,
                          morph, lemma, syntax_dep_tree):
@@ -69,10 +73,10 @@ class FeatureModelDefault:
         features_pred_lemma = {'pred_lemma': pred_lemma}
         features_arg_lemma = {'arg_lemma': arg_lemma}
 
-        # Tuple (categorical, embeddings, continues)
-        return [(None, features_arg_lemma, None),
-                (None, features_pred_lemma, None),
-                (features_categorical, None, features_noncat)]
+        # Tuple (categorical, embeddings, continues, position)
+        return [(None, features_arg_lemma, None, arg),
+                (None, features_pred_lemma, None, pred),
+                (features_categorical, None, features_noncat, None)]
 
 
 class FeatureModelUnknownPredicates:
@@ -117,8 +121,8 @@ class ModelProcessorSrlFramebank:
             logger.info(f'Model has no embeddings! Loading {embedding_path}')
             return ELMoEmbedder(embedding_path, elmo_output_names=['elmo'])
         
-    def _vectorize_embeddings(self, feature_embeddings):
-        def type_w2v():
+    def _vectorize_embeddings(self, feature_embeddings, sent_embeddings, position):
+        def _w2v():
             results = []
             for word in feature_embeddings.values():
                 if word in self._embeddings:
@@ -128,18 +132,27 @@ class ModelProcessorSrlFramebank:
 
             return np.concatenate(results)
                                 
-        def type_elmo():
-            # ToDO: work with tags carefully
-            return self._embeddings([[value[:value.rfind('_')] for value in feature_embeddings.values()]])[0]
+        def _elmo():
+            return np.array(sent_embeddings[min(position, len(sent_embeddings)-1)])
                                 
         if self._embeddings_type == 'w2v':
-            return type_w2v()
+            return _w2v()
         
         if self._embeddings_type == 'elmo':
-            return type_elmo()
+            return _elmo()
         
-    
-
+    def _embed_sentence(self, tokens):
+        def _w2v():
+            return []
+                                
+        def _elmo():
+            return self._embeddings([tokens])[0]
+        
+        if self._embeddings_type == 'w2v':
+            return _w2v()
+        
+        if self._embeddings_type == 'elmo':
+            return _elmo()
 
 class ProcessorSrlFramebank:
     def __init__(self,
@@ -168,14 +181,14 @@ class ProcessorSrlFramebank:
                             
             logger.info('Loading the model for known predicates...')
             self._model_known_preds = ModelProcessorSrlFramebank(os.path.join(self.model_dir_path, 'known_preds'), 
-                                                                 embeddings_type='elmo')
+                                                                 embeddings_type=_KNOWN_PREDS_EMBEDDINGS)
             logger.info('Model for known predicates is loaded.')
 
         if not self._model_unknown_preds:
             path_model_unknown_preds = os.path.join(self.model_dir_path, 'unknown_preds')
             if self.enable_model_for_unknown_predicates and os.path.exists(path_model_unknown_preds):
                 self._model_unknown_preds = ModelProcessorSrlFramebank(path_model_unknown_preds, 
-                                                                       embeddings_type='w2v')
+                                                                       embeddings_type=_UNKNOWN_PREDS_EMBEDDINGS)
                 logger.info('Model for unknown predicates is loaded.')
             else:
                 self._model_unknown_preds = None
@@ -185,22 +198,27 @@ class ProcessorSrlFramebank:
     def _vectorize_categorical(self, model, feature_categ):
         return model._categorical_encoder.transform(feature_categ).reshape(-1)
 
-    def _vectorize_features(self, model, features):
+    def _vectorize_features(self, model, features, sent_embed):
         result = []
         for feat in features:
             vectorized_feats = []
             if feat[0]:
                 vectorized_feats.append(self._vectorize_categorical(model, feat[0]))
             if feat[1]:
-                vectorized_feats.append(model._vectorize_embeddings(feat[1]))
+                vectorized_feats.append(model._vectorize_embeddings(feat[1], sent_embed, feat[3]))
             if feat[2]:
                 vectorized_feats.append(np.array(list(feat[2].values())))
 
             result.append(np.concatenate(vectorized_feats).reshape(1, -1))
 
         return result
+    
+    def _apply_threshold(self, predictions, threshold):
+        predictions[predictions < threshold] = 0.
+        
+        return np.array(predictions)
 
-    def _process_argument(self, model, pred, arg, sent_postag,
+    def _process_argument(self, model, pred, arg, sent_embed, sent_postag,
                           sent_morph, sent_lemma, sent_syntax_dep_tree):
 
         features = model._feature_model.extract_features(pred,
@@ -211,25 +229,38 @@ class ProcessorSrlFramebank:
                                                          sent_syntax_dep_tree)
         assert features
 
-        vectors = self._vectorize_features(model, features)
+        vectors = self._vectorize_features(model, features, sent_embed)
 
         logger.info('predicting')
         logger.info(str(model._model))
         logger.info(vectors[0].shape)
         res = model._model.predict(vectors)
+        res = self._apply_threshold(res, threshold=.1)
         logger.info('Done.')
 
         return res
 
-    def __call__(self, postag, morph, lemma, syntax_dep_tree):
+    def __call__(self, tokens, postag, morph, lemma, syntax_dep_tree):
         assert self._model_known_preds
 
         result = []
+        tokens_counter = 0
         for sent_num in range(len(postag)):
             sent_postag = postag[sent_num]
             sent_morph = morph[sent_num]
             sent_lemma = lemma[sent_num]
             sent_syntax_dep_tree = syntax_dep_tree[sent_num]
+            
+            if 'elmo' in (self._model_known_preds._embeddings_type, self._model_unknown_preds._embeddings_type):
+                sent_tokens = [token.text for token in tokens[tokens_counter:tokens_counter+len(sent_postag)]]
+                tokens_counter += tokens_counter + len(sent_postag)
+                if self._model_known_preds._embeddings_type == 'elmo':
+                    sent_embeddings = self._model_known_preds._embed_sentence(sent_tokens)
+                else:
+                    sent_embeddings = self._model_unknown_preds._embed_sentence(sent_tokens)
+                del sent_tokens
+            else:
+                sent_embeddings = [], []
 
             preds = self._predicate_extractor(sent_postag, sent_morph,
                                               sent_lemma, sent_syntax_dep_tree)
@@ -253,6 +284,7 @@ class ProcessorSrlFramebank:
                     arg_roles = [self._process_argument(model,
                                                         pred,
                                                         arg,
+                                                        sent_embeddings,
                                                         sent_postag,
                                                         sent_morph,
                                                         sent_lemma,

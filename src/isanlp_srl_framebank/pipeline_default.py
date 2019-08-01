@@ -20,7 +20,7 @@ class PipelineDefault:
                                       {'morph' : 'morph',
                                        'postag' : 'postag'}),
                                      (ProcessorRemote(address_srl[0], address_srl[1], 'default'),
-                                      ['postag', 'morph', 'lemma', 'syntax_dep_tree'],
+                                      ['tokens', 'postag', 'morph', 'lemma', 'syntax_dep_tree'],
                                       {'srl' : 'srl'})])
         self._name = 'default'
     
