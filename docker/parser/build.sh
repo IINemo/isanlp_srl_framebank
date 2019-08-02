@@ -4,7 +4,10 @@ script_dir=$(dirname $0)
 if [ ! -d $script_dir/isanlp_srl_framebank ]; then
     mkdir $script_dir/isanlp_srl_framebank;
 fi
-rsync -r $script_dir/../../src/ $script_dir/isanlp_srl_framebank/src
-rsync -r $script_dir/../../models/ $script_dir/models
-nvidia-docker build -t tchewik/isanlp_srl_framebank $script_dir
-
+# rsync -r $script_dir/../../src/ $script_dir/isanlp_srl_framebank/src
+# rsync -r $script_dir/../../models/ $script_dir/models
+rm -r $script_dir/isanlp_srl_framebank/src
+cp -r $script_dir/../../src/ $script_dir/isanlp_srl_framebank/src
+rm -r $script_dir/models
+cp -r $script_dir/../../models/ $script_dir/models
+docker build -t tchewik/isanlp_srl_framebank $script_dir
