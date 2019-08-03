@@ -290,29 +290,41 @@ class ProcessorSrlFramebank:
                                                         sent_lemma,
                                                         sent_syntax_dep_tree)
                                  for arg in args]
+                    
+                    clean_args = []
+                    clean_roles = []
+                    for i, arg in enumerate(args):
+                        if model._roles.inverse_transform(arg_roles[i]) != 'non_rel':
+                            clean_args.append(arg)
+                            clean_roles.append(arg_roles[i])
+                    
+                    args = clean_args
+                    arg_roles = clean_roles
+                    
+                    if arg_roles:
 
-                    if self._enable_global_scoring:
-                        logger.info('Solving linear sum task.')
-                        roles = [None for i in range(len(args))]
-                        row_ind, col_ind = linear_sum_assignment(-1. * np.concatenate(arg_roles, axis=0))
-                        logger.info('Finished.')
+                        if self._enable_global_scoring:
+                            logger.info('Solving linear sum task.')
+                            roles = [None for i in range(len(args))]
+                            row_ind, col_ind = linear_sum_assignment(-1. * np.concatenate(arg_roles, axis=0))
+                            logger.info('Finished.')
 
-                        for row_ind, col_ind in zip(row_ind, col_ind):
-                            roles[row_ind] = model._roles.classes_[col_ind]
+                            for row_ind, col_ind in zip(row_ind, col_ind):
+                                roles[row_ind] = model._roles.classes_[col_ind]
 
-                        for i in range(len(args)):
-                            arg_annot = TaggedSpan(tag=roles[i], begin=args[i], end=args[i])
-                            pred_arg_roles.append(arg_annot)
-                    else:
-                        logger.info('Using inverse transform.')
-                        roles = model._roles.inverse_transform(np.concatenate(arg_roles))
-                        roles = [str(e) for e in roles]
-                        pred_arg_roles = []
-                        for i in range(len(args)):
-                            arg_annot = TaggedSpan(tag=roles[i], begin=args[i], end=args[i])
-                            pred_arg_roles.append(arg_annot)
+                            for i in range(len(args)):
+                                arg_annot = TaggedSpan(tag=roles[i], begin=args[i], end=args[i])
+                                pred_arg_roles.append(arg_annot)
+                        else:
+                            logger.info('Using inverse transform.')
+                            roles = model._roles.inverse_transform(np.concatenate(arg_roles))
+                            roles = [str(e) for e in roles]
+                            pred_arg_roles = []
+                            for i in range(len(args)):
+                                arg_annot = TaggedSpan(tag=roles[i], begin=args[i], end=args[i])
+                                pred_arg_roles.append(arg_annot)
 
-                    sent_arg_roles.append(Event(pred=(pred, pred), args=pred_arg_roles))
+                        sent_arg_roles.append(Event(pred=(pred, pred), args=pred_arg_roles))
 
             result.append(sent_arg_roles)
 
