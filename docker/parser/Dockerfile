@@ -22,7 +22,7 @@ FROM inemo/isanlp_base:0.0.5
 RUN pip install -U pip
 RUN python -m pip install -U cython
 
-RUN pip install setuptools==41.0.1 scipy scikit-learn==0.19.1 gensim==3.6.0 smart-open==1.7.0 tensorflow==1.12.0 keras h5py deeppavlov tensorflow-hub
+RUN pip install bert-serving-client setuptools==41.0.1 scipy scikit-learn==0.19.1 gensim==3.6.0 smart-open==1.7.0 tensorflow==1.14.0 keras h5py deeppavlov tensorflow-hub
 
 RUN python -c "import tensorflow as tf; print(tf.__version__)"
 
