@@ -1,6 +1,7 @@
 .vscode
 /models/*
 /models*
+*.vec
 *models/
 .ipynb_*
 /data/*
