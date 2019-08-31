@@ -8,7 +8,7 @@ COPY isanlp_srl_framebank /src/isanlp_srl_framebank
 COPY demo /var/www/demo
 RUN chmod +x /var/www/demo/wui.py
 
-COPY brat /var/www/brat
+COPY brat /var/www/demo/brat
 
 EXPOSE 80
 
