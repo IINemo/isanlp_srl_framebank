@@ -1,0 +1,47 @@
+version: '3.7'
+services:
+
+  srl_demo:
+    image: isanlp/srl_demo
+    environment:
+      - MORPH_ADDRESS=isanlp:3333
+      - SYNTAXNET_ADDRESS=syntaxnet_rus:3333
+      - SRL_ADDRESS=isanlp_srl_framebank:3333
+    networks:
+      - internal_net
+      - default
+    ports:
+      - "127.0.0.1:3333:3333"
+    depends_on:
+      - isanlp
+      - syntaxnet_rus
+      - isanlp_srl_framebank
+
+  isanlp:
+    image: inemo/isanlp
+    networks:
+      - internal_net
+    expose:
+      - "3333"
+
+  syntaxnet_rus:
+    image: inemo/syntaxnet_rus
+    command: ["server",  "0.0.0.0", "3333"]
+    shm_size: 1G
+    networks:
+      - internal_net
+    expose:
+      - "3333"
+
+  isanlp_srl_framebank:
+    image: inemo/isanlp_srl_framebank
+    networks:
+      - internal_net
+    expose:
+      - "3333"
+
+networks:
+  internal_net:
+    driver: bridge
+    internal: true
+  default:
