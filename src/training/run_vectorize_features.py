@@ -7,7 +7,8 @@ import os
 import numpy as np
 
 
-def main(feature_path, output_dir, known_preds=True):
+#def main(feature_path, output_dir, known_preds=True):
+def main(feature_path, output_dir):
     with open(feature_path, 'rb') as f:
         X_train = pickle.load(f)
         
@@ -23,8 +24,8 @@ def main(feature_path, output_dir, known_preds=True):
     columns_to_ommit = ['tokens']
     X_train = X_train.drop('role', axis=1)
     
-    if not known_preds and 'pred_lemma' in X_train.keys():
-        X_train = X_train.drop(columns=['pred_lemma'])
+#     if not known_preds and 'pred_lemma' in X_train.keys():
+#         X_train = X_train.drop(columns=['pred_lemma'])
 
     not_categ_features = {'arg_address', 'ex_id', 'rel_pos'}
 
