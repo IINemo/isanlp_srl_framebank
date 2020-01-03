@@ -20,7 +20,8 @@ from isanlp.processor_sentence_splitter import ProcessorSentenceSplitter
 from isanlp.wrapper_multi_process_document import WrapperMultiProcessDocument
 from isanlp.wrapper_multi_process_document import split_equally
 
-from isanlp_srl_framebank import make_text, create_verb_example_index
+from isanlp_srl_framebank.convert_corpus_to_brat import make_text, create_verb_example_index
+
 
 class UdpipePipeline(object):
 
@@ -95,14 +96,18 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process frambank .json file to obtain linguistic data')
     parser.add_argument("--cleared-corpus", nargs="?", dest="source", default="../data/cleared_corpus.json", help="preprocessed framebank file in .json format")
     parser.add_argument("--output", nargs="?", dest="output", default="../data/results_final_fixed.pckl", help="path to output .pckl file")
+    parser.add_argument('--isanlp_proc')
+    parser.add_argument('--udpipe_proc')
 
     args = parser.parse_args()
     input_file = args.source
     output_file = args.output
+    isanlp_proc = args.isanlp_proc.split(':')
+    udpipe_proc = args.udpipe_proc.split(':')
 
-    ppl = UdpipePipeline()
+    ppl = UdpipePipeline(basic_processor=isanlp_proc, udpipe_processor=udpipe_proc)
 
-    print("1. Reading data....")
+    print("1.Reading data....")
     with open(input_file, 'r') as f:
         data = json.load(f)
     print("..Done!")    
@@ -120,4 +125,3 @@ if __name__ == "__main__":
     with open(args.output, 'wb') as f:
         pickle.dump(ling_annotations, f)
     print("..Done!")
-

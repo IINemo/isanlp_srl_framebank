@@ -1,8 +1,10 @@
 from tensorflow.keras import layers as nn
 import tensorflow as tf
 
-class SimpleModelFactory(object):
-    def __init__(self, input_dim, hidden_1=600, hidden_2=400, dropout_1=0.3, dropout_2=0.3, number_of_roles=34):
+
+class SimpleModelFactory:
+    def __init__(self, input_dim, hidden_1=600, hidden_2=400, 
+                 dropout_1=0.3, dropout_2=0.3, number_of_roles=34):
         self.input_dim=input_dim
         self.hidden_1=hidden_1
         self.hidden_2=hidden_2
@@ -22,8 +24,6 @@ class SimpleModelFactory(object):
         model.add(nn.Dense(self.number_of_roles))
         model.add(nn.BatchNormalization())
         model.add(nn.Activation(tf.keras.activations.softmax))
-
-
         return model
 
     def create_and_compile(self):
@@ -33,7 +33,9 @@ class SimpleModelFactory(object):
 
 
 class SparseModelFactory(object):
-    def __init__(self, input_dims: list, hidden_categorical=400, hidden_embeddings=100, hidden_concat=400, dropout=0.3, number_of_roles=34):
+    def __init__(self, input_dims: list, number_of_roles, 
+                 hidden_categorical=400, hidden_embeddings=100, 
+                 hidden_concat=400, dropout=0.3):
         self.input_dims = input_dims
         self.hidden_categorical=hidden_categorical
         self.hidden_embeddings=hidden_embeddings
@@ -42,9 +44,9 @@ class SparseModelFactory(object):
         self.number_of_roles=number_of_roles
         
     def create(self):
-        input_categorical = nn.Input(shape=(self.input_dims[0],), name='input-categorical')
-        input_pred = nn.Input(shape=(self.input_dims[1],), name='input-predicate-embeddings')
-        input_arg = nn.Input(shape=(self.input_dims[2],), name='')
+        input_categorical = nn.Input(shape=(self.input_dims[0],), name='input_categorical')
+        input_pred = nn.Input(shape=(self.input_dims[1],), name='pred_embed')
+        input_arg = nn.Input(shape=(self.input_dims[2],), name='arg_embed')
 
         categorical = nn.Dense(self.hidden_categorical)(input_categorical)
         categorical = nn.BatchNormalization()(categorical)

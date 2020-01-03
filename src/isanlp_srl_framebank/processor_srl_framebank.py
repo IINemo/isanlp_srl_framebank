@@ -1,5 +1,5 @@
 from tensorflow.python.keras.models import load_model
-from tensorflow.keras.backend import set_session
+from tensorflow.python.keras.backend import set_session
 from gensim.models import KeyedVectors
 from deeppavlov.models.embedders.elmo_embedder import ELMoEmbedder
 from scipy.optimize import linear_sum_assignment
@@ -36,8 +36,8 @@ logging.basicConfig(filename="sample.log", level=logging.INFO)
 # TODO: refactor
 
 # select type of embeddings for each model here ('w2v' | 'elmo' | 'bert')
-_KNOWN_PREDS_EMBEDDINGS = 'bert'
-_UNKNOWN_PREDS_EMBEDDINGS = 'bert'
+# _KNOWN_PREDS_EMBEDDINGS = 'elmo'
+# _UNKNOWN_PREDS_EMBEDDINGS = 'elmo'
 
 
 class FeatureModelDefault:
@@ -101,14 +101,20 @@ class ModelProcessorSrlFramebank:
     def __init__(self, model_dir_path, embeddings_type):
         self._model_dir_path = model_dir_path
         #-----------------------Using TFLite------------------------
+        logger.info('Loading the model...')
         self._model = tfl.Interpreter(os.path.join(model_dir_path, 'neural_model.tflite'))
+        logger.info('Done.')
         self._model.allocate_tensors()
         self._input_idxs = {x['name']:x['index'] for x in self._model.get_input_details()}
         self._output_idx = self._model.get_output_details()[0]['index']
         #-----------------------------------------------------------
+        
+        logger.info('Loading embeddings...')
         self._embeddings_type = embeddings_type
         self._embeddings = self._load_embeddings()
+        logger.info('Done.')
 
+        logger.info('Loading feature models...')
         with open(os.path.join(model_dir_path, 'feature_encoder.pckl'), 'rb') as f:
             self._categorical_encoder = pickle.load(f)
 
@@ -117,6 +123,7 @@ class ModelProcessorSrlFramebank:
 
         with open(os.path.join(model_dir_path, 'feature_model.pckl'), 'rb') as f:
             self._feature_model = pickle.load(f)
+        logger.info('Done.')
         
     def _load_embeddings(self):
         if type(self._model_dir_path) == tuple:
@@ -164,7 +171,10 @@ class ModelProcessorSrlFramebank:
             return self._embeddings([tokens])[0]
 
         def _bert():
-            return self._embeddings.encode([tokens], is_tokenized=True, show_tokens=False)[0, 1:len(tokens)+1, :]
+            print(tokens)
+            res = self._embeddings.encode([tokens], is_tokenized=True, show_tokens=False)
+            print(res)
+            return res[0, 1:len(tokens)+1, :]
         
         if self._embeddings_type == 'w2v':
             return _w2v()
@@ -178,9 +188,11 @@ class ModelProcessorSrlFramebank:
 class ProcessorSrlFramebank:
     def __init__(self,
                  model_dir_path,
+                 known_preds_embeddings_type,
                  predicate_extractor=PredicateExtractor(),
                  argument_extractor=ArgumentExtractor(),
-                 enable_model_for_unknown_predicates=True,
+                 enable_model_for_unknown_predicates=False,
+                 unknown_preds_embeddings_type=None,
                  enable_global_scoring=True,
                  delay_init=False):
 
@@ -189,6 +201,8 @@ class ProcessorSrlFramebank:
         self._argument_extractor = argument_extractor
         self.enable_model_for_unknown_predicates = enable_model_for_unknown_predicates
         self._enable_global_scoring = enable_global_scoring
+        self._known_preds_embeddings_type = known_preds_embeddings_type
+        self._unknown_preds_embeddings_type = unknown_preds_embeddings_type
 
         self._model_known_preds = None
         self._model_unknown_preds = None
@@ -202,41 +216,47 @@ class ProcessorSrlFramebank:
                             
             logger.info('Loading the model for known predicates...')
             self._model_known_preds = ModelProcessorSrlFramebank(os.path.join(self.model_dir_path, 'known_preds'), 
-                                                                 embeddings_type=_KNOWN_PREDS_EMBEDDINGS)
+                                                                 embeddings_type=self._known_preds_embeddings_type)
             logger.info('Model for known predicates is loaded.')
 
         if not self._model_unknown_preds:
             path_model_unknown_preds = os.path.join(self.model_dir_path, 'unknown_preds')
             if self.enable_model_for_unknown_predicates and os.path.exists(path_model_unknown_preds):
                 self._model_unknown_preds = ModelProcessorSrlFramebank(path_model_unknown_preds, 
-                                                                       embeddings_type=_UNKNOWN_PREDS_EMBEDDINGS)
+                                                                       embeddings_type=self._unknown_preds_embeddings_type)
                 logger.info('Model for unknown predicates is loaded.')
             else:
                 self._model_unknown_preds = None
-
-    
 
     def _vectorize_categorical(self, model, feature_categ):
         return model._categorical_encoder.transform(feature_categ).reshape(-1)
 
     def _vectorize_features(self, model, features, sent_embed):
         result = []
+        print('Feats:', features)
         for feat in features:
             vectorized_feats = []
             if feat[0]:
-                vectorized_feats.append(self._vectorize_categorical(model, feat[0]))
+                tmp = self._vectorize_categorical(model, feat[0])
+                print('Cat:', tmp)
+                vectorized_feats.append(tmp)
             if feat[1]:
-                vectorized_feats.append(model._vectorize_embeddings(feat[1], sent_embed, feat[3]))
+                tmp = model._vectorize_embeddings(feat[1], sent_embed, feat[3])
+                print('Emb:', tmp)
+                vectorized_feats.append(tmp)
             if feat[2]:
-                vectorized_feats.append(np.array(list(feat[2].values())))
+                tmp = np.array(list(feat[2].values()))
+                print('No emb', tmp)
+                vectorized_feats.append(tmp)
+            print('Vectorizfed feats:', vectorized_feats)
 
             result.append(np.concatenate(vectorized_feats).reshape(1, -1))
 
+        print('Res', result)
         return result
     
     def _apply_threshold(self, predictions, threshold):
         predictions[predictions < threshold] = 0.
-        
         return np.array(predictions)
 
     def _process_argument(self, model, pred, arg, sent_embed, sent_postag,
@@ -278,17 +298,13 @@ class ProcessorSrlFramebank:
             sent_lemma = lemma[sent_num]
             sent_syntax_dep_tree = syntax_dep_tree[sent_num]
             
-            if 'elmo' in (self._model_known_preds._embeddings_type, self._model_unknown_preds._embeddings_type):
+            if self._model_known_preds._embeddings_type in ('elmo' ,'bert'):
                 sent_tokens = [token.text for token in tokens[tokens_counter:tokens_counter+len(sent_postag)]]
                 tokens_counter += tokens_counter + len(sent_postag)
-                if self._model_known_preds._embeddings_type == 'elmo':
-                    sent_embeddings = self._model_known_preds._embed_sentence(sent_tokens)
-                else:
-                    sent_embeddings = self._model_unknown_preds._embed_sentence(sent_tokens)
-                del sent_tokens
+                sent_embeddings = self._model_known_preds._embed_sentence(sent_tokens)
             else:
                 sent_embeddings = [], []
-
+            
             preds = self._predicate_extractor(sent_postag, sent_morph,
                                               sent_lemma, sent_syntax_dep_tree)
 

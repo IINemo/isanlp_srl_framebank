@@ -1,8 +1,8 @@
 from tqdm import tqdm
-from isanlp_srl_framebank import make_text
+from isanlp_srl_framebank.convert_corpus_to_brat import make_text
 
-class FeatureModelingTool(object):
 
+class FeatureModelingTool:
     def __init__(self, ling_cache, feature_extractor):
         self.ling_cache = ling_cache
         self.feature_extractor = feature_extractor
@@ -19,7 +19,6 @@ class FeatureModelingTool(object):
                 break
 
         return sent_num, tok_num - sent.begin
-
 
     def process_arg_pred(self, ex_id, pred, args, example):
         feature_sets = list()
@@ -47,18 +46,22 @@ class FeatureModelingTool(object):
                     self.error_examples[ex_id] = []
                 self.error_examples[ex_id].append((ex_id, lens, "length mismatch"))
                 continue
-
-            fb_pred_word = example[pred[0]][pred[1]]
-            fb_arg_word = example[arg[0]][arg[1]]
-
-            role = fb_arg_word['rolepred1']
-
+                
             if arg_ling_sent != pred_ling_sent:
                 self.num_of_errors += 1
                 # We miss some examples due to mistakes in framebank or discrepancy in
                 # automatica annotation of sentences.
                 #print('Error #{}'.format(num_of_errors))
                 continue
+
+            fb_pred_word = example[pred[0]][pred[1]]
+            fb_arg_word = example[arg[0]][arg[1]]
+            
+            sentence = ling_ann['sentences'][pred_ling_sent]
+            tokens = [tok.text for tok in ling_ann['tokens']]
+            tokens = tokens[sentence.begin:sentence.end]
+
+            role = fb_arg_word['rolepred1']
 
             try:
                 features = self.feature_extractor.extract_features(pred_ling_word,
@@ -74,10 +77,10 @@ class FeatureModelingTool(object):
                 self.error_examples[ex_id].append((ex_id, lens, str(e)))
                 continue
 
-            feature_sets.append((features, role, ex_id, arg))
+            #feature_sets.append((features, role, ex_id, arg))
+            feature_sets.append((features, role, ex_id, tokens, arg_ling_word, pred_ling_word))
 
         return feature_sets
-
 
     def process_example(self, ex_id, sentences):
         pred = None
@@ -94,7 +97,6 @@ class FeatureModelingTool(object):
 
     num_of_errors = 0
 
-
     def prepare_train_data(self, examples):
         feature_sets = []
         for ex_num, (ex_id, ex) in tqdm(enumerate(examples)):
@@ -102,3 +104,4 @@ class FeatureModelingTool(object):
 
         print('Number of training examples:', len(feature_sets))
         return feature_sets
+    
