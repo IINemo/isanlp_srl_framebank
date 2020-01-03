@@ -1,2 +1,0 @@
-1. The current model in the docker container is prepared with train_framebank_parser.ipynb .
-2. The rest of the files are refactored version train_framebank_parser.ipynb designed for experiments with heavy features that need online generators. 
