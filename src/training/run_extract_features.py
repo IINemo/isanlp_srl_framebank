@@ -1,26 +1,20 @@
-from sklearn.feature_extraction import DictVectorizer
-from sklearn.preprocessing import LabelBinarizer
-
 from gensim.models import KeyedVectors
 
 from tqdm import tqdm
 import pandas as pd
 import numpy as np
-
-from feature_modeling import FeatureModelingTool
-from embedding import embed_single
-
 import multiprocessing as mp
 import argparse
 import pickle
 import json
-import isanlp
 import time
 import os
 
+from feature_modeling import FeatureModelingTool
 from isanlp_srl_framebank.convert_corpus_to_brat import make_text
 from isanlp_srl_framebank.processor_srl_framebank import FeatureModelDefault, FeatureModelUnknownPredicates
 from isanlp.annotation_repr import CSentence
+
 
 DEFAULT_REPL_ROLES = {
     'агенс - субъект восприятия': 'субъект восприятия',
@@ -79,12 +73,6 @@ def split_to_x_y(dataframe):
     X_orig = dataframe.drop('role', axis=1)
 
     return X_orig, y_orig
-
-
-def train_label_encoder(labels):
-    label_encoder = LabelBinarizer()
-    y = label_encoder.fit_transform(labels)
-    return y, label_encoder
 
 
 def get_feature_names(dataframe, not_categ_features={'arg_address', 'ex_id', 'rel_pos', 'arg_lemma'}):
