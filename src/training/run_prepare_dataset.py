@@ -7,6 +7,8 @@ sys.path.append('../libs/pylingtools/')
 
 import isanlp_srl_framebank as isanlp
 
+from isanlp_srl_framebank import convert_corpus_to_brat
+
 import json
 import argparse
 
@@ -28,11 +30,12 @@ print("Number of examples: ", len(data))
 min_n_examples = args.min_n
 
 print("2. Clearing verbs....")
-verb_index = isanlp.create_verb_example_index(data)
+verb_index = convert_corpus_to_brat.create_verb_example_index(data)
 print('Original number of verbs: ', len(verb_index))
 
 stat = sorted([(verb, len(examples)) for verb, examples in verb_index.items()], 
               key = lambda x: x[1], reverse=True)
+
 
 verbs_to_keep = [verb for verb, count in stat if count >= min_n_examples]
 

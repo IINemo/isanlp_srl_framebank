@@ -163,9 +163,9 @@ def create_verb_example_index(json_data):
     for ex_id, example in json_data.items():
         for sent in example:
             for word in sent:
-                if(word.get(u'rank', u'') == u'Предикат'):
-                    if u'lemma' in word:
-                        verb_example_index[word[u'lemma']].append(ex_id)
+                if(word.get('rank', '') == 'Предикат'):
+                    if 'lemma' in word:
+                        verb_example_index[word['lemma']].append(ex_id)
     
     return verb_example_index
     

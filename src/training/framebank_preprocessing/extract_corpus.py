@@ -219,9 +219,11 @@ def convert(text_file_path,
 
     result = dict()
     for num, line in enumerate(iter(text_file.readline, '')):
+    #for num, line in enumerate(text_file):
         try:
             ex_index, parsed_text = process_text_line(line, 
                                                       converter_errors_logger)
+#             print(ex_index)
 
             sentences = list()
             for sent in parsed_text.findall('.//se'):
@@ -236,6 +238,7 @@ def convert(text_file_path,
                                           'file: {} due to "{}"'.format(num, err))
             converter_errors_logger.error(line)
 
+    print(len(result))
     text_file.close()
     logger.info('Done.')
 

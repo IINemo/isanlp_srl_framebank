@@ -9,16 +9,16 @@ import codecs
 def prepare_annot_word(wd):
     
     def remove_quotes(string):
-        quotes = u'"«»,. \t' + u"'"
+        quotes = '"«»,. \t' + u"'"
         return string.strip(quotes)
     
     def get_main_word(string):
         string = string.strip()
         
-        bad = u' / '
+        bad = ' / '
         n = string.find(bad)
         if n == -1:
-            bad = u' '
+            bad = ' '
             n = string.find(bad)
     
         result = string
@@ -41,17 +41,17 @@ def prepare_text_word(wd):
 
 
 def compare_tokens(annot_token, text_token):
-    hyphen_annot = (annot_token.count(u'-') == 1)
-    hyphen_text = (text_token.count(u'-') == 1)
+    hyphen_annot = (annot_token.count('-') == 1)
+    hyphen_text = (text_token.count('-') == 1)
     
     if (hyphen_annot and hyphen_text) or (not hyphen_annot and not hyphen_text):
         return annot_token == text_token
     else:
-        annot_repr = annot_token.split(u'-')
-        text_repr = text_token.split(u'-')
+        annot_repr = annot_token.split('-')
+        text_repr = text_token.split('-')
         
         for an_part in annot_repr:
-            if an_part == u'то':
+            if an_part == 'то':
                 continue
             
             if an_part in text_repr:
@@ -64,7 +64,7 @@ def find_token_in_sent(arg, text, predicate = None):
     annot_token = prepare_annot_word(arg['WordDep'])
     
     def f_find_impl(start, end, adv):
-        for i in xrange(start, end, adv):
+        for i in range(start, end, adv):
             token = text[i]
             text_token = prepare_text_word(token['form'])
             if compare_tokens(annot_token, text_token):
@@ -103,7 +103,7 @@ def find_all_tokens_in_text(arg, text):
 def find_arg_positions(args, pred, sent):
     result = dict()
     for arg_idx, arg in enumerate(args):
-        if unicode(arg['WordDep']) == u'nan':
+        if str(arg['WordDep']) == 'nan':
             continue
         
         token_index = find_token_in_sent(arg, sent, predicate = pred)
@@ -159,7 +159,7 @@ def check_role(role):
         return False
     
     srole = role.strip()
-    if srole in [u'-', u'?', u'0']:
+    if srole in ['-', '?', '0']:
         return False
     
     return True
@@ -183,8 +183,8 @@ def extract_args_and_pred(annot_data, offset_data, err_logger):
     annot_pred = None
     
     for annot in annot_data:
-        if (annot.loc['Rank'] == u'Предикат' and 
-            unicode(annot.loc['WordDep']) != u'nan'):
+        if (annot.loc['Rank'] == 'Предикат' and 
+            str(annot.loc['WordDep']) != 'nan'):
             annot_pred = annot
             annot_pred['Offset'] = get_offset(offset_data, annot_pred)
         else:
@@ -219,20 +219,20 @@ def process_example(index,
         pred_token['pred'] = annot_pred['ConstrIndex']
 
     for annot_arg_index, annot_arg in enumerate(annot_args):
-        if unicode(annot_arg['WordDep']) == u'nan':
+        if str(annot_arg['WordDep']) == 'nan':
             err_logger.warning('Empty WordDep of an argument '
                                '(id: {}, index: {})'.format(example_index, 
                                                             index))
             continue
         
         if annot_arg_index not in text_args:
-            pred_str = u''
+            pred_str = ''
             if annot_pred is not None:
                 pred_str = annot_pred['WordDep']
                 
             err_logger.error('Failed to locate token {} in example text ' 
                              '(id: {}, pred: {}, '
-                             'index: {}).'.format(unicode(annot_arg['WordDep']).encode('utf8'), 
+                             'index: {}).'.format(str(annot_arg['WordDep']).encode('utf8'), 
                                                   example_index,
                                                   pred_str.encode('utf8'),
                                                   index))
@@ -306,8 +306,8 @@ def build_offset_cache(offset_data):
 
 def print_annot_statistics(logger, annots):
     logger.info('Examples: {}.'.format(len(annots.loc[:, 'ExIndex'].unique())))
-    logger.info('Predicates: {}'.format(len(annots[annots['Rank'] == u'Предикат'])))
-    logger.info('Args: {}'.format(len(annots[annots['Rank'] != u'Предикат'])))
+    logger.info('Predicates: {}'.format(len(annots[annots['Rank'] == 'Предикат'])))
+    logger.info('Args: {}'.format(len(annots[annots['Rank'] != 'Предикат'])))
     
 
 def print_corpus_statistics(logger, corpus):
@@ -315,14 +315,14 @@ def print_corpus_statistics(logger, corpus):
     n_args = 0
     n_preds = 0
     n_ex_with_args = 0
-    for example in corpus.itervalues():
+    for example in corpus.values():
         n_examples += 1
         
         have_args = False
         
         for sent in example:
             for word in sent:
-                if 'rank' in word and word['rank'] == u'Предикат':
+                if 'rank' in word and word['rank'] == 'Предикат':
                     n_preds += 1
                     have_args = True
                 elif 'rolepred1' in word:
@@ -372,7 +372,7 @@ def process(json_file_path,
     logger.info('Saving results...')
     del annots
     with codecs.open(output_file_path, 'w', encoding = 'utf8') as f:
-        json.dump(text_data, f, encoding = 'utf8', ensure_ascii = False)
+        json.dump(text_data, f, ensure_ascii = False)
         
     logger.info('Done.')
 

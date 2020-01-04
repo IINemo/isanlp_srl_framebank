@@ -1,5 +1,7 @@
 import os
 import sys
+sys.path.append('../')
+
 import argparse
 import os
 import time
@@ -25,7 +27,7 @@ from isanlp_srl_framebank.convert_corpus_to_brat import make_text, create_verb_e
 
 class UdpipePipeline(object):
 
-    def __init__(self, basic_processor=('vmh1.isa.ru', 3344), udpipe_processor=('vmh1.isa.ru', 3355)):
+    def __init__(self, basic_processor, udpipe_processor):
         self.ppl = WrapperMultiProcessDocument([
                     PipelineCommon([
                         (
