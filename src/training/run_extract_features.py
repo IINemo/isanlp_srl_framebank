@@ -9,6 +9,9 @@ import pickle
 import json
 import time
 import os
+import sys
+
+sys.path.append('../')
 
 from feature_modeling import FeatureModelingTool
 from isanlp_srl_framebank.convert_corpus_to_brat import make_text
