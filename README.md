@@ -204,7 +204,25 @@ Arg(место): лес
 ```  
 
 ### Model training  
-TBD:
+1. Download and preprocess dataset. 
+```python ./run_download_preproc.py --workdir=<existing_workdir>```
+
+2. Do the linguistic preprocessing of the dataset (postagging, parsing, etc.)
+
+  * Start linguistic preprocessing services:
+```
+docker run --rm -d -p 3333:3333 inemo/isanlp
+docker run --rm -d -p 3334:3333 inemo/isanlp_udpipe
+```
+
+  * Run preprocessing (change 192.168.1.69 to address of the machine, on which you started the linguistic processing services).
+```python ./run_ling_parse.py --workdir=existing_workdir --isanlp_proc=192.168.1.69:3333 --udpipe_proc=192.168.1.69:3334```
+
+3. Generate features, embed with ELMo, and train models:
+```python ./run_training_pipeline.py --data_dir=existing_workdir --workdir=existing_workdir```
+
+
+Finally you can take trained models from directories 'known_preds' and 'unknown_preds' and place them in \<project root\>/models directory to create updated docker containers (or use them in the processor).
 
 ### Starting web demo
 1. To start web demo, you should start NLP services for morphology, syntax, and SRL parsing first:
@@ -221,15 +239,26 @@ Note: instead of `10.0.0.9` you should use your host ip address (but not localho
 3. After web server started you can acesses demo interface at http://10.0.0.9:1111/demo/wui.py
 <img src="img_demo.png" width="350">
 
-## Implementation details  
-TBD:
 
 ## Compatability
-The library should be compatible at least with Python 3.6.  
-Tested with gensim==3.6.0 tensorflow==1.12.0 .
+The library should be compatible at least with Python 3.7.  
+Tested with gensim==3.6.0 tensorflow==1.15.0 .
 
 ## Cite / Reference 
-The models for SRL were published in [Dialog proceedings](http://www.dialog-21.ru/media/3945/shelmanovaodevyatkinda.pdf).  
+1. Models were published in [RANLP proceedings](http://lml.bas.bg/ranlp2019/proceedings-ranlp-2019.pdf) 
+  * GOST: Larionov D., Shelmanov A., Chistova E., Smirnov I. Semantic role labeling with pretrained language models for known and unknown predicates // Proceedings of RANLP. — 2019. — P. 245–256.
+  * BibTex:
+```
+@INPROCEEDINGS{devshelm2019ranlp,
+      author = {Larionov D., Shelmanov A., Chistova E., Smirnov I.},
+      title = {Semantic role labeling with pretrained language models for known and unknown predicates},
+      booktitle = {Proceedings of Recent Advances in Natural Language Processing},
+      year = {2019},
+      pages = {620--628}
+}
+```
+
+2. Original models for SRL were published in [Dialog proceedings](http://www.dialog-21.ru/media/3945/shelmanovaodevyatkinda.pdf).  
   * GOST:  
 Shelmanov A., Devyatkin D. Semantic role labeling with neural networks for texts in Russian // Computational Linguistics and Intellectual Technologies. Papers from the Annual International Conference "Dialogue" (2017). — Vol. 1. — 2017. — P. 245–256.  
   * BibTex:
