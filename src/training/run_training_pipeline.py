@@ -3,6 +3,8 @@ import sys
 sys.path.append('../')
 
 import fire
+import pickle
+import json
 
 
 def run_command(command):
@@ -33,6 +35,15 @@ def work_with_one_model(cleared_corpus_path, ling_data, output_dir):
     print('Done.===========================================================')
 
 
+def extract_known_predicates(features_path, workdir):
+    with open(features_path, 'rb') as f:
+        dataframe = pickle.load(f)
+        
+    known_preds = [e.split('_')[0] for e in dataframe.pred_lemma.tolist()]
+    with open(os.path.join(workdir, 'known_preds.json'), 'w') as f:
+        json.dump(known_preds, f)
+        
+    
 def main(data_dir, workdir):
     cleared_corpus_path = os.path.join(data_dir, 'cleared_corpus.json')
     ling_data = os.path.join(data_dir, 'ling_data.pckl')
@@ -40,6 +51,8 @@ def main(data_dir, workdir):
     print('Generating the model for known predicates**********************************')
     output_dir = os.path.join(workdir, 'known_preds')
     work_with_one_model(cleared_corpus_path, ling_data, output_dir)
+    
+    extract_known_predicates(os.path.join(output_dir, 'features.pckl'), workdir)
 
     print('Generating the model for unknown predicates********************************')
     output_dir = os.path.join(workdir, 'unknown_preds')
