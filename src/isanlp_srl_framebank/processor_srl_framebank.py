@@ -171,9 +171,7 @@ class ModelProcessorSrlFramebank:
             return self._embeddings([tokens])[0]
 
         def _bert():
-            print(tokens)
             res = self._embeddings.encode([tokens], is_tokenized=True, show_tokens=False)
-            print(res)
             return res[0, 1:len(tokens)+1, :]
         
         if self._embeddings_type == 'w2v':
@@ -233,26 +231,20 @@ class ProcessorSrlFramebank:
 
     def _vectorize_features(self, model, features, sent_embed):
         result = []
-        print('Feats:', features)
         for feat in features:
             vectorized_feats = []
             if feat[0]:
                 tmp = self._vectorize_categorical(model, feat[0])
-                print('Cat:', tmp)
                 vectorized_feats.append(tmp)
             if feat[1]:
                 tmp = model._vectorize_embeddings(feat[1], sent_embed, feat[3])
-                print('Emb:', tmp)
                 vectorized_feats.append(tmp)
             if feat[2]:
                 tmp = np.array(list(feat[2].values()))
-                print('No emb', tmp)
                 vectorized_feats.append(tmp)
-            print('Vectorizfed feats:', vectorized_feats)
 
             result.append(np.concatenate(vectorized_feats).reshape(1, -1))
 
-        print('Res', result)
         return result
     
     def _apply_threshold(self, predictions, threshold):
