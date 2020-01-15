@@ -100,8 +100,14 @@ if __name__ == "__main__":
     parser.add_argument("--output", nargs="?", dest="output", default="../data/results_final_fixed.pckl", help="path to output .pckl file")
     parser.add_argument('--isanlp_proc')
     parser.add_argument('--udpipe_proc')
+    parser.add_argument('--workdir')
 
     args = parser.parse_args()
+    
+    if args.workdir:
+        args.source = os.path.join(args.workdir, 'cleared_corpus.json')
+        args.output = os.path.join(args.workdir, 'ling_data.pckl')
+    
     input_file = args.source
     output_file = args.output
     isanlp_proc = args.isanlp_proc.split(':')
