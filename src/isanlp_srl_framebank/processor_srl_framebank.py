@@ -180,7 +180,8 @@ class ProcessorSrlFramebank:
                  enable_model_for_unknown_predicates=False,
                  unknown_preds_embeddings_type=None,
                  enable_global_scoring=True,
-                 delay_init=False):
+                 delay_init=False,
+                 threshold=0.1):
 
         self.model_dir_path = model_dir_path
         self._predicate_extractor = predicate_extractor
@@ -189,6 +190,8 @@ class ProcessorSrlFramebank:
         self._enable_global_scoring = enable_global_scoring
         self._known_preds_embeddings_type = known_preds_embeddings_type
         self._unknown_preds_embeddings_type = unknown_preds_embeddings_type
+        
+        self._threshold = threshold
 
         self._model_known_preds = None
         self._model_unknown_preds = None
@@ -253,8 +256,8 @@ class ProcessorSrlFramebank:
         vectors = self._vectorize_features(model, features, sent_embed)
         args, verbs, plain_features = vectors
         logger.info('predicting')
-        logger.info(str(model._model))
-        logger.info(vectors[0].shape)
+        #logger.info(str(model._model))
+        #logger.info(vectors[0].shape)
 
         model._model.set_tensor(model._input_idxs['arg_embed'], np.array(args, dtype=np.float32))
         model._model.set_tensor(model._input_idxs['pred_embed'], np.array(verbs, dtype=np.float32))
@@ -262,7 +265,7 @@ class ProcessorSrlFramebank:
         model._model.invoke()
         res = model._model.get_tensor(model._output_idx)
 
-        res = self._apply_threshold(res, threshold=.1)
+        res = self._apply_threshold(res, threshold=self._threshold)
         logger.info('Done.')
 
         return res
@@ -317,7 +320,11 @@ class ProcessorSrlFramebank:
                     clean_args = []
                     clean_roles = []
                     for i, arg in enumerate(args):
+                        if np.isclose(np.sum(arg_roles[i]), 0.):
+                            continue
+                            
                         arg_role_name = model._roles.inverse_transform(arg_roles[i])
+                        
                         if pred_lemma in self._known_preds.keys():
                             if arg_role_name in self._known_preds.get(pred_lemma):
                                 clean_args.append(arg)
